@@ -71,6 +71,8 @@ class View {
    */
   public static function display_view(array $articles) : void
   {
+    $contents = "hogehoge";
+    View::output(['contents' => $contents]);
   }
 
   /**
@@ -80,6 +82,35 @@ class View {
    */
   public static function display_edit(array $article) : void
   {
+  }
+
+  /**
+   * 出力
+   *
+   * @param array $viewdata 表示データ
+   */
+  private static function output($viewdata) : void
+  {
+    print <<<HTML
+      <!DOCTYPE html>
+      <html lang="ja">
+        <head>
+          <link rel="stylesheet" href="style.css" type="text/css" title="base">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body>
+          <div id="container">
+            <header id="header">
+            </header>
+            <div id="contents">
+              {$viewdata['contents']}
+            </div>
+            <footer id="footer">
+            </footer>
+          </div>
+        </body>
+      </html>
+      HTML;
   }
 }
 
