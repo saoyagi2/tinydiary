@@ -53,6 +53,9 @@ class App {
    */
   private function edit() : void
   {
+    $date = $_REQUEST['date'] ?? date('Ymd');
+    $article = $this->db->query("SELECT * FROM articles WHERE date = :date", [':date' => $date])[0] ?? ['date' => $date, 'message' => ""];
+    View::display_edit($article);
   }
 
   /**
@@ -60,6 +63,10 @@ class App {
    */
   private function update() : void
   {
+    $date = sprintf("%04d%02d%02d", $_REQUEST['year'], $_REQUEST['month'], $_REQUEST['day']);
+    $message = $_REQUEST['message'];
+    $this->db->query("REPLACE INTO articles (date, message) VALUES(:date, :message)", [':date' => $date, ':message' => $message]);
+    header("Location: index.php?date={$date}");
   }
 }
 
@@ -103,6 +110,22 @@ class View {
    */
   public static function display_edit(array $article) : void
   {
+    $year = (int)substr($article['date'], 0, 4);
+    $month = (int)substr($article['date'], 4, 2);
+    $day = (int)substr($article['date'], 6, 2);
+    $message = View::h($article['message']);
+
+    $contents = <<<HTML
+      <form action="index.php" method="POST">
+        <input type="hidden" name="mode" value="update">年
+        <input type="text" name="year" value="${year}">年
+        <input type="text" name="month" value="${month}">月
+        <input type="text" name="day" value="${day}">日
+        <textarea name="message">{$message}</textarea>
+        <input type="submit" value="更新">
+      </form>
+      HTML;
+    View::output(['contents' => $contents]);
   }
 
   /**
