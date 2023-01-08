@@ -71,7 +71,28 @@ class View {
    */
   public static function display_view(array $articles) : void
   {
-    $contents = "hogehoge";
+    $contents = "";
+    foreach($articles as $article) {
+      $year = (int)substr($article['date'], 0, 4);
+      $month = (int)substr($article['date'], 4, 2);
+      $day = (int)substr($article['date'], 6, 2);
+      if(!checkdate($month, $day, $year)) {
+        continue;
+      }
+      $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
+
+      $message = "";
+      foreach(explode("\n", str_replace(array("\r\n", "\r", "\n"), "\n", $article['message'])) as $_message) {
+        $message .= "<p>" . View::h($_message) . "</p>";
+      }
+
+      $contents .= <<<HTML
+        <div class="article">
+          <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+          <div class="message">{$message}</div>
+        </div>
+        HTML;
+    }
     View::output(['contents' => $contents]);
   }
 
@@ -111,6 +132,17 @@ class View {
         </body>
       </html>
       HTML;
+  }
+
+  /**
+  * HTML エスケープ
+  *
+  * @param string $str エスケープする文字列
+  * @return string エスケープ済文字列
+  */
+  private static function h(string $str) : string
+  {
+    return(htmlspecialchars($str, ENT_QUOTES, 'UTF-8'));
   }
 }
 
