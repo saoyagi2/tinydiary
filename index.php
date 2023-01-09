@@ -135,6 +135,7 @@ class View {
       $contents .= <<<HTML
         <div class="article" id="d{$date}">
           <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
           <div class="message">{$message}</div>
         </div>
         HTML;
