@@ -118,14 +118,17 @@ class View {
     $year = (int)$article['year'];
     $month = (int)$article['month'];
     $day = (int)$article['day'];
+    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
     $message = View::h($article['message']);
 
     $contents = <<<HTML
+      <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+      <div class="message">
       <form action="index.php" method="POST">
-        <input type="hidden" name="mode" value="update">年
-        <input type="text" name="year" value="${year}">年
-        <input type="text" name="month" value="${month}">月
-        <input type="text" name="day" value="${day}">日
+        <input type="hidden" name="mode" value="update">
+        <input type="hidden" name="year" value="${year}">
+        <input type="hidden" name="month" value="${month}">
+        <input type="hidden" name="day" value="${day}">
         <textarea name="message">{$message}</textarea>
         <input type="submit" value="更新">
       </form>
