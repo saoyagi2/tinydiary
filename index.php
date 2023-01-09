@@ -61,15 +61,15 @@ class App {
     else {
       if($year !== '') {
         $wheres[] = 'year = :year';
-        $params[':year'] = $year;
+        $params[':year'] = (int)$year;
       }
       if($month !== '') {
         $wheres[] = 'month = :month';
-        $params[':month'] = $month;
+        $params[':month'] = (int)$month;
       }
       if($day !== '') {
         $wheres[] = 'day = :day';
-        $params[':day'] = $day;
+        $params[':day'] = (int)$day;
       }
     }
     $sql = 'SELECT * FROM articles';
@@ -79,7 +79,7 @@ class App {
     $sql .= " ORDER BY year ASC, month ASC, day ASC";
 
     $articles = $this->db->query($sql, $params);
-    View::display_view($articles);
+    View::display_view($year, $month, $day, $articles);
   }
 
   /**
@@ -112,35 +112,80 @@ class View {
   /**
    * 表示画面
    *
+   * @param string $year 年
+   * @param string $month 月
+   * @param string $day 日
    * @param array $articles 日記データ
    */
-  public static function display_view(array $articles) : void
+  public static function display_view(string $year, string $month, string $day, array $articles) : void
   {
     $contents = "";
-    foreach($articles as $article) {
-      $year = (int)$article['year'];
-      $month = (int)$article['month'];
-      $day = (int)$article['day'];
-      if(!checkdate($month, $day, $year)) {
-        continue;
-      }
-      $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
 
-      $message = "";
+    if($year === '' && $month === '' && $day === '') {
+      $_year = (int)date('Y');
+      $_month = (int)date('m');
+      $_day = (int)date('d');
+
+      $article = array_values(array_filter($articles, function($article) use($_year, $_month, $_day) {
+        return($article['year'] == $_year && $article['month'] == $_month && $article['day'] == $_day);
+      }))[0];
+
+      $contents .= View::_view_daily($_year, $_month, $_day, $article);
+    }
+    else if($year !== '' && $month !== '' && $day !== '') {
+      $article = array_values(array_filter($articles, function($article) use($year, $month, $day) {
+        return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
+      }))[0];
+
+      $contents .= View::_view_daily($year, $month, $day, $article);
+    }
+    else if($year !== '' && $month === '' && $day === '') {
+      for($_month = 1; $_month <= 12; $_month++) {
+        for($_day = 1; $_day <= (int)date('t', strtotime(sprintf("%04d-%02d-01", $year, $_month))); $_day++) {
+          $article = array_values(array_filter($articles, function($article) use($year, $_month, $_day) {
+            return($article['year'] == $year && $article['month'] == $_month && $article['day'] == $_day);
+          }))[0];
+
+          $contents .= View::_view_daily($year, $_month, $_day, $article);
+        }
+      }
+    }
+    else if($year !== '' && $month !== '' && $day === '') {
+      for($_day = 1; $_day <= (int)date('t', strtotime(sprintf("%04d-%02d-01", $year, $month))); $_day++) {
+        $article = array_values(array_filter($articles, function($article) use($year, $month, $_day) {
+          return($article['year'] == $year && $article['month'] == $month && $article['day'] == $_day);
+        }))[0];
+
+        $contents .= View::_view_daily($year, $month, $_day, $article);
+      }
+    }
+
+    View::output(['contents' => $contents]);
+  }
+
+  private static function _view_daily(int $year, int $month, int $day, ?array $article) : string
+  {
+    $contents = "";
+
+    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
+
+    $message = "";
+    if(!empty($article)) {
       foreach(explode("\n", str_replace(array("\r\n", "\r", "\n"), "\n", $article['message'])) as $_message) {
         $message .= "<p>" . View::h($_message) . "</p>";
       }
-
-      $date = sprintf("%04d%02d%02d", $year, $month, $day);
-      $contents .= <<<HTML
-        <div class="article" id="d{$date}">
-          <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
-          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
-          <div class="message">{$message}</div>
-        </div>
-        HTML;
     }
-    View::output(['contents' => $contents]);
+
+    $date = sprintf("%04d%02d%02d", $year, $month, $day);
+    $contents .= <<<HTML
+      <div class="article" id="d{$date}">
+        <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+        <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+        <div class="message">{$message}</div>
+      </div>
+      HTML;
+
+    return($contents);
   }
 
   /**
