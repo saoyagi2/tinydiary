@@ -44,7 +44,41 @@ class App {
    */
   private function view() : void
   {
-    $articles = $this->db->query("SELECT * FROM articles");
+    $year = $_REQUEST['year'] ?? '';
+    $month = $_REQUEST['month'] ?? '';
+    $day = $_REQUEST['day'] ?? '';
+
+    $wheres = [];
+    $params = [];
+    if($year === '' && $month === '' && $day === '') {
+      $wheres[] = 'year = :year';
+      $params[':year'] = date('Y');
+      $wheres[] = 'month = :month';
+      $params[':month'] = date('m');
+      $wheres[] = 'day = :day';
+      $params[':day'] = date('d');
+    }
+    else {
+      if($year !== '') {
+        $wheres[] = 'year = :year';
+        $params[':year'] = $year;
+      }
+      if($month !== '') {
+        $wheres[] = 'month = :month';
+        $params[':month'] = $month;
+      }
+      if($day !== '') {
+        $wheres[] = 'day = :day';
+        $params[':day'] = $day;
+      }
+    }
+    $sql = 'SELECT * FROM articles';
+    if(!empty($wheres)) {
+      $sql .= ' WHERE ' . implode(' AND ', $wheres);
+    }
+    $sql .= " ORDER BY year ASC, month ASC, day ASC";
+
+    $articles = $this->db->query($sql, $params);
     View::display_view($articles);
   }
 
