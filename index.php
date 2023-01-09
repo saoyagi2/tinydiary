@@ -53,8 +53,10 @@ class App {
    */
   private function edit() : void
   {
-    $date = $_REQUEST['date'] ?? date('Ymd');
-    $article = $this->db->query("SELECT * FROM articles WHERE date = :date", [':date' => $date])[0] ?? ['date' => $date, 'message' => ""];
+    $year = $_REQUEST['year'] ?? date('Y');
+    $month = $_REQUEST['month'] ?? date('m');
+    $day = $_REQUEST['day'] ?? date('d');
+    $article = $this->db->query("SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day", [':year' => $year, ':month' => $month, ':day' => $day])[0] ?? ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ""];
     View::display_edit($article);
   }
 
@@ -63,10 +65,12 @@ class App {
    */
   private function update() : void
   {
-    $date = sprintf("%04d%02d%02d", $_REQUEST['year'], $_REQUEST['month'], $_REQUEST['day']);
+    $year = $_REQUEST['year'];
+    $month = $_REQUEST['month'];
+    $day = $_REQUEST['day'];
     $message = $_REQUEST['message'];
-    $this->db->query("REPLACE INTO articles (date, message) VALUES(:date, :message)", [':date' => $date, ':message' => $message]);
-    header("Location: index.php?date={$date}");
+    $this->db->query("REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)", [':year' => $year, ':month' => $month, ':day' => $day, ':message' => $message]);
+    header("Location: index.php?year={$year}&month={$month}&day={$day}");
   }
 }
 
@@ -80,9 +84,9 @@ class View {
   {
     $contents = "";
     foreach($articles as $article) {
-      $year = (int)substr($article['date'], 0, 4);
-      $month = (int)substr($article['date'], 4, 2);
-      $day = (int)substr($article['date'], 6, 2);
+      $year = (int)$article['year'];
+      $month = (int)$article['month'];
+      $day = (int)$article['day'];
       if(!checkdate($month, $day, $year)) {
         continue;
       }
@@ -110,9 +114,9 @@ class View {
    */
   public static function display_edit(array $article) : void
   {
-    $year = (int)substr($article['date'], 0, 4);
-    $month = (int)substr($article['date'], 4, 2);
-    $day = (int)substr($article['date'], 6, 2);
+    $year = (int)$article['year'];
+    $month = (int)$article['month'];
+    $day = (int)$article['day'];
     $message = View::h($article['message']);
 
     $contents = <<<HTML
@@ -210,10 +214,12 @@ class DB {
   {
     $this->db_conn->exec("CREATE TABLE IF NOT EXISTS articles(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT UNIQUE NOT NULL,
+      year INTGER NOT NULL,
+      month INTGER NOT NULL,
+      day INTGER NOT NULL,
       message TEXT
     )");
-    $this->db_conn->exec("CREATE INDEX IF NOT EXISTS article_idx ON articles (date)");
+    $this->db_conn->exec("CREATE UNIQUE INDEX IF NOT EXISTS article_ymd_idx ON articles (year, month, day)");
   }
 
   /**
