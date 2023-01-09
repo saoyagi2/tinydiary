@@ -97,8 +97,9 @@ class View {
         $message .= "<p>" . View::h($_message) . "</p>";
       }
 
+      $date = sprintf("%04d%02d%02d", $year, $month, $day);
       $contents .= <<<HTML
-        <div class="article">
+        <div class="article" id="d{$date}">
           <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
           <div class="message">{$message}</div>
         </div>
