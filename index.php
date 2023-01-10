@@ -47,29 +47,38 @@ class App {
     $year = $_REQUEST['year'] ?? '';
     $month = $_REQUEST['month'] ?? '';
     $day = $_REQUEST['day'] ?? '';
+    $keyword = $_REQUEST['keyword'] ?? '';
 
     $wheres = [];
     $params = [];
-    if($year === '' && $month === '' && $day === '') {
-      $wheres[] = 'year = :year';
-      $params[':year'] = date('Y');
-      $wheres[] = 'month = :month';
-      $params[':month'] = date('m');
-      $wheres[] = 'day = :day';
-      $params[':day'] = date('d');
+    if($keyword === '') {
+      if($year === '' && $month === '' && $day === '') {
+        $wheres[] = 'year = :year';
+        $params[':year'] = date('Y');
+        $wheres[] = 'month = :month';
+        $params[':month'] = date('m');
+        $wheres[] = 'day = :day';
+        $params[':day'] = date('d');
+      }
+      else {
+        if($year !== '') {
+          $wheres[] = 'year = :year';
+          $params[':year'] = (int)$year;
+        }
+        if($month !== '') {
+          $wheres[] = 'month = :month';
+          $params[':month'] = (int)$month;
+        }
+        if($day !== '') {
+          $wheres[] = 'day = :day';
+          $params[':day'] = (int)$day;
+        }
+      }
     }
     else {
-      if($year !== '') {
-        $wheres[] = 'year = :year';
-        $params[':year'] = (int)$year;
-      }
-      if($month !== '') {
-        $wheres[] = 'month = :month';
-        $params[':month'] = (int)$month;
-      }
-      if($day !== '') {
-        $wheres[] = 'day = :day';
-        $params[':day'] = (int)$day;
+      foreach(explode(' ', $keyword) as $_keyword) {
+        $wheres[] = 'message LIKE ?';
+        $params[] = "%{$_keyword}%";
       }
     }
     $sql = 'SELECT * FROM articles';
@@ -121,6 +130,14 @@ class View {
   {
     $contents = "";
 
+    $contents .= <<<HTML
+      <form action="index.php?mode=view" method="GET">
+        <label>検索:
+          <input type="type" name="keyword">
+        </label>
+        <input type="submit" value="検索">
+      </form>
+      HTML;
     if($year === '' && $month === '' && $day === '') { // 年月日指定なし=今日のみ
       $_year = (int)date('Y');
       $_month = (int)date('m');
