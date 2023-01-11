@@ -44,42 +44,24 @@ class App {
    */
   private function view() : void
   {
-    $year = $_REQUEST['year'] ?? '';
-    $month = $_REQUEST['month'] ?? '';
-    $day = $_REQUEST['day'] ?? '';
+    $year = $_REQUEST['year'] ?? date('Y');
+    $month = $_REQUEST['month'] ?? date('m');
     $keyword = $_REQUEST['keyword'] ?? '';
 
     $wheres = [];
     $params = [];
     if($keyword === '') {
-      if($year === '' && $month === '' && $day === '') {
-        $wheres[] = 'year = :year';
-        $params[':year'] = date('Y');
-        $wheres[] = 'month = :month';
-        $params[':month'] = date('m');
-        $wheres[] = 'day = :day';
-        $params[':day'] = date('d');
-      }
-      else {
-        if($year !== '') {
-          $wheres[] = 'year = :year';
-          $params[':year'] = (int)$year;
-        }
-        if($month !== '') {
-          $wheres[] = 'month = :month';
-          $params[':month'] = (int)$month;
-        }
-        if($day !== '') {
-          $wheres[] = 'day = :day';
-          $params[':day'] = (int)$day;
-        }
-      }
+      $wheres[] = 'year = :year';
+      $params[':year'] = (int)$year;
+      $wheres[] = 'month = :month';
+      $params[':month'] = (int)$month;
     }
     else {
       foreach(explode(' ', $keyword) as $_keyword) {
         $wheres[] = 'message LIKE ?';
         $params[] = "%{$_keyword}%";
       }
+      $year = $month = '';
     }
     $sql = 'SELECT * FROM articles';
     if(!empty($wheres)) {
@@ -88,7 +70,7 @@ class App {
     $sql .= " ORDER BY year ASC, month ASC, day ASC";
 
     $articles = $this->db->query($sql, $params);
-    View::display_view($year, $month, $day, $articles);
+    View::display_view(['articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
   }
 
   /**
@@ -113,7 +95,7 @@ class App {
     $day = $_REQUEST['day'];
     $message = $_REQUEST['message'];
     $this->db->query("REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)", [':year' => $year, ':month' => $month, ':day' => $day, ':message' => $message]);
-    header("Location: index.php?year={$year}&month={$month}&day={$day}");
+    header("Location: index.php?year={$year}&month={$month}");
   }
 }
 
@@ -121,121 +103,46 @@ class View {
   /**
    * 表示画面
    *
-   * @param string $year 年
-   * @param string $month 月
-   * @param string $day 日
-   * @param array $articles 日記データ
+   * @param array $viewdata 表示データ
    */
-  public static function display_view(string $year, string $month, string $day, array $articles) : void
+  public static function display_view(array $viewdata) : void
   {
     $contents = "";
 
     $contents .= <<<HTML
       <form action="index.php?mode=view" method="GET">
         <label>検索:
-          <input type="type" name="keyword">
+          <input type="type" name="keyword" value="{$viewdata['keyword']}">
         </label>
         <input type="submit" value="検索">
       </form>
       HTML;
-    if($year === '' && $month === '' && $day === '') { // 年月日指定なし=今日のみ
-      $_year = (int)date('Y');
-      $_month = (int)date('m');
-      $_day = (int)date('d');
-
-      $contents .= <<<HTML
-        <div class="navi">
-          <ul>
-            <li><a href="index.php?year={$_year}&amp;month={$_month}&amp;day={$day}">前日</a></li>
-            <li><a href="index.php?year={$_year}&amp;month={$_month}&amp;day={$day}">翌日</a></li>
-            <li><a href="index.php?year={$_year}&amp;month={$_month}">今月</a></li>
-          </ul>
-        </div>
-        HTML;
-
-      $article = array_values(array_filter($articles, function($article) use($_year, $_month, $_day) {
-        return($article['year'] == $_year && $article['month'] == $_month && $article['day'] == $_day);
-      }))[0];
-
-      $contents .= View::_view_daily($_year, $_month, $_day, $article);
-    }
-    else if($year !== '' && $month !== '' && $day !== '') { // 年月日指定全て指定あり
-      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "-1 day"));
-      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "-1 day"));
-      $prev_day = date('j', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "-1 day"));
-      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "+1 day"));
-      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "+1 day"));
-      $next_day = date('j', strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day) . "+1 day"));
-      $contents .= <<<HTML
-        <div class="navi">
-          <ul>
-            <li><a href="index.php?year={$prev_year}&amp;month={$prev_month}&amp;day={$prev_day}">前日</a></li>
-            <li><a href="index.php?year={$next_year}&amp;month={$next_month}&amp;day={$next_day}">翌日</a></li>
-            <li><a href="index.php?year={$year}&amp;month={$month}">今月</a></li>
-          </ul>
-        </div>
-        HTML;
-
-      $article = array_values(array_filter($articles, function($article) use($year, $month, $day) {
-        return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
-      }))[0];
-
-      $contents .= View::_view_daily($year, $month, $day, $article);
-    }
-    else if($year !== '' && $month === '' && $day === '') { // 年のみ指定あり
-      $prev_year = $year - 1;
-      $next_year = $year + 1;
-      $contents .= <<<HTML
-        <div class="navi">
-          <ul>
-            <li><a href="index.php?year={$prev_year}">前年</a></li>
-            <li><a href="index.php?year={$next_year}">翌年</a></li>
-          </ul>
-        </div>
-        HTML;
-
-      for($_month = 1; $_month <= 12; $_month++) {
-        for($_day = 1; $_day <= (int)date('t', strtotime(sprintf("%04d-%02d-01", $year, $_month))); $_day++) {
-          $article = array_values(array_filter($articles, function($article) use($year, $_month, $_day) {
-            return($article['year'] == $year && $article['month'] == $_month && $article['day'] == $_day);
-          }))[0];
-
-          $contents .= View::_view_daily($year, $_month, $_day, $article);
-        }
-      }
-    }
-    else if($year !== '' && $month !== '' && $day === '') { // 年月のみ指定あり
-      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
-      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
-      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
-      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
+    if($viewdata['year'] !== '' && $viewdata['month'] !== '') { // 年月指定あり
+      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
+      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
+      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
+      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
       $contents .= <<<HTML
         <div class="navi">
           <ul>
             <li><a href="index.php?year={$prev_year}&amp;month={$prev_month}">前月</a></li>
             <li><a href="index.php?year={$next_year}&amp;month={$next_month}">翌月</a></li>
-            <li><a href="index.php?year={$year}">今年</a></li>
           </ul>
         </div>
         HTML;
-
-      for($_day = 1; $_day <= (int)date('t', strtotime(sprintf("%04d-%02d-01", $year, $month))); $_day++) {
-        $article = array_values(array_filter($articles, function($article) use($year, $month, $_day) {
-          return($article['year'] == $year && $article['month'] == $month && $article['day'] == $_day);
-        }))[0];
-
-        $contents .= View::_view_daily($year, $month, $_day, $article);
-      }
+    }
+    foreach($viewdata['articles'] as $article) {
+      $contents .= View::_view_daily($article);
     }
 
     View::output(['contents' => $contents]);
   }
 
-  private static function _view_daily(int $year, int $month, int $day, ?array $article) : string
+  private static function _view_daily(array $article) : string
   {
     $contents = "";
 
-    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
+    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $article['year'], $article['month'], $article['day'])))];
 
     $message = "";
     if(!empty($article)) {
@@ -244,11 +151,11 @@ class View {
       }
     }
 
-    $date = sprintf("%04d%02d%02d", $year, $month, $day);
+    $date = sprintf("%04d%02d%02d", $article['year'], $article['month'], $article['day']);
     $contents .= <<<HTML
       <div class="article" id="d{$date}">
-        <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
-        <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+        <div class="date">{$article['year']}年{$article['month']}月{$article['day']}日({$weekday})</div>
+        <div class="links"><a href="index.php?mode=edit&amp;year={$article['year']}&amp;month={$article['month']}&amp;day={$article['day']}">編集</a></div>
         <div class="message">{$message}</div>
       </div>
       HTML;
