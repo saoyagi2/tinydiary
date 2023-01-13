@@ -67,9 +67,22 @@ class App {
     if(!empty($wheres)) {
       $sql .= ' WHERE ' . implode(' AND ', $wheres);
     }
-    $sql .= " ORDER BY year ASC, month ASC, day ASC";
 
     $articles = $this->db->query($sql, $params);
+    if($keyword === '') {
+      $lastday = date('t', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+      for($day = 1; $day <= $lastday; $day++) {
+        if(count(array_filter($articles, function($article) use($year, $month, $day) {
+          return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
+        })) == 0) {
+          $articles[] = ['year' => $year, 'month' => $month, 'day' => $day, $message => ''];
+        }
+      }
+      usort($articles, function($a, $b) {
+        return($a['day'] <=> $b['day']);
+      });
+    }
+
     View::display_view(['articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
   }
 
