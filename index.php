@@ -70,7 +70,12 @@ class App {
 
     $articles = $this->db->query($sql, $params);
     if($keyword === '') {
-      $lastday = date('t', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+      if($year == date('Y') && $month == date('m')) {
+        $lastday = date('d');
+      }
+      else {
+        $lastday = date('t', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+      }
       for($day = 1; $day <= $lastday; $day++) {
         if(count(array_filter($articles, function($article) use($year, $month, $day) {
           return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
