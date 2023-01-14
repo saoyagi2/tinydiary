@@ -39,6 +39,9 @@ class App {
       case 'update':
         $this->update();
         break;
+      case 'search':
+        $this->search();
+        break;
       case 'show':
       default:
         $this->show();
@@ -52,30 +55,15 @@ class App {
   {
     $year = $_REQUEST['year'] ?? date('Y');
     $month = $_REQUEST['month'] ?? date('m');
-    $keyword = $_REQUEST['keyword'] ?? '';
 
-    $wheres = [];
-    $params = [];
-    if($keyword === '') {
-      $wheres[] = 'year = :year';
-      $params[':year'] = (int)$year;
-      $wheres[] = 'month = :month';
-      $params[':month'] = (int)$month;
-    }
-    else {
-      foreach(explode(' ', $keyword) as $_keyword) {
-        $wheres[] = 'message LIKE ?';
-        $params[] = "%{$_keyword}%";
-      }
-      $year = $month = '';
-    }
-    $sql = 'SELECT * FROM articles';
-    if(!empty($wheres)) {
-      $sql .= ' WHERE ' . implode(' AND ', $wheres);
-    }
+    $params = [
+      ':year' => (int)$year,
+      ':month' => (int)$month,
+    ];
+    $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
 
     $articles = $this->db->query($sql, $params);
-    if($keyword === '' && ($year < date('Y') || $year == date('Y') && $month <= date('m'))) {
+    if($year < date('Y') || $year == date('Y') && $month <= date('m')) {
       if($year == date('Y') && $month == date('m')) {
         $lastday = date('d');
       }
@@ -94,7 +82,27 @@ class App {
       });
     }
 
-    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
+    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'year' => $year, 'month' => $month]);
+  }
+
+  /**
+   * 日記検索結果画面
+   */
+  private function search() : void
+  {
+    $keyword = $_REQUEST['keyword'] ?? "";
+
+    $wheres = [];
+    $params = [];
+    foreach(explode(" ", $keyword) as $_keyword) {
+      $wheres[] = 'message LIKE ?';
+      $params[] = "%{$_keyword}%";
+    }
+    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres);
+
+    $articles = $this->db->query($sql, $params);
+
+    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'keyword' => $keyword]);
   }
 
   /**
@@ -131,25 +139,30 @@ class View {
    */
   public function display_show(array $viewdata) : void
   {
+    $year = $viewdata['year'] ?? "";
+    $month = $viewdata['month'] ?? "";
+    $keyword = $viewdata['keyword'] ?? "";
+
     $contents = "";
 
     $contents .= <<<HTML
       <form action="index.php?mode=view" method="GET">
         <label>検索:
-          <input type="type" name="keyword" value="{$viewdata['keyword']}">
+          <input type="hidden" name="mode" value="search">
+          <input type="type" name="keyword" value="{$keyword}">
         </label>
         <input type="submit" value="検索">
       </form>
       HTML;
-    if($viewdata['year'] !== '' && $viewdata['month'] !== '') { // 年月指定あり
+    if($year !== '' && $month !== '') { // 年月指定あり
       $contents .= "<div class=\"navi\"><ul>";
-      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
-      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
+      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
+      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
       if($prev_year < date('Y') || $prev_year == date('Y') && $prev_month <= date('m')) {
         $contents .= "<li><a href=\"index.php?year={$prev_year}&amp;month={$prev_month}\">前月</a></li>";
       }
-      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
-      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
+      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
+      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
       if($next_year < date('Y') || $next_year == date('Y') && $next_month <= date('m')) {
         $contents .= "<li><a href=\"index.php?year={$next_year}&amp;month={$next_month}\">翌月</a></li>";
       }
