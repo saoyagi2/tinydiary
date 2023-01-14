@@ -31,7 +31,8 @@ class App {
    */
   public function run() : void
   {
-    switch($_REQUEST['mode']) {
+    $mode = $_REQUEST['mode'] ?? "";
+    switch($mode) {
       case 'edit':
         $this->edit();
         break;
@@ -85,7 +86,7 @@ class App {
         if(count(array_filter($articles, function($article) use($year, $month, $day) {
           return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
         })) == 0) {
-          $articles[] = ['year' => $year, 'month' => $month, 'day' => $day, $message => ''];
+          $articles[] = ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ''];
         }
       }
       usort($articles, function($a, $b) {
