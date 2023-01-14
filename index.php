@@ -8,6 +8,8 @@ require 'config.php';
 }
 
 class App {
+  /** @var config */
+  private $config;
   /** @var DB */
   private $db;
   private $view;
@@ -19,7 +21,8 @@ class App {
    */
   public function __construct(array $config)
   {
-    $this->db = new DB($config['db_path']);
+    $this->config = $config;
+    $this->db = new DB($this->config['db_path']);
     $this->view = new View();
   }
 
@@ -90,7 +93,7 @@ class App {
       });
     }
 
-    $this->view->display_show(['articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
+    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
   }
 
   /**
@@ -102,7 +105,7 @@ class App {
     $month = $_REQUEST['month'] ?? date('m');
     $day = $_REQUEST['day'] ?? date('d');
     $article = $this->db->query("SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day", [':year' => $year, ':month' => $month, ':day' => $day])[0] ?? ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ""];
-    $this->view->display_edit($article);
+    $this->view->display_edit(['title' => $this->config['title'], 'article' => $article]);
   }
 
   /**
@@ -155,7 +158,7 @@ class View {
       $contents .= $this->_view_daily($article);
     }
 
-    $this->output(['contents' => $contents]);
+    $this->output(['title' => $viewdata['title'], 'contents' => $contents]);
   }
 
   private function _view_daily(array $article) : string
@@ -186,15 +189,15 @@ class View {
   /**
    * 編集画面
    *
-   * @param array $article 日記データ
+   * @param array $viewdata 表示データ
    */
-  public function display_edit(array $article) : void
+  public function display_edit(array $viewdata) : void
   {
-    $year = (int)$article['year'];
-    $month = (int)$article['month'];
-    $day = (int)$article['day'];
+    $year = (int)$viewdata['article']['year'];
+    $month = (int)$viewdata['article']['month'];
+    $day = (int)$viewdata['article']['day'];
     $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
-    $message = $this->h($article['message']);
+    $message = $this->h($viewdata['article']['message']);
 
     $contents = <<<HTML
       <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
@@ -208,7 +211,7 @@ class View {
         <input type="submit" value="更新">
       </form>
       HTML;
-    $this->output(['contents' => $contents]);
+    $this->output(['title' => $viewdata['title'], 'contents' => $contents]);
   }
 
   /**
@@ -222,12 +225,14 @@ class View {
       <!DOCTYPE html>
       <html lang="ja">
         <head>
+          <title>{$viewdata['title']}</title>
           <link rel="stylesheet" href="style.css" type="text/css" title="base">
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>
           <div id="container">
             <header id="header">
+              <h1><a href="index.php">{$viewdata['title']}</a></h1>
             </header>
             <div id="contents">
               {$viewdata['contents']}
