@@ -98,11 +98,13 @@ class App {
       $wheres[] = 'message LIKE ?';
       $params[] = "%{$_keyword}%";
     }
-    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres);
+    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year DESC, month DESC, day DESC LIMIT 21";
 
     $articles = $this->db->query($sql, $params);
+    $limited = count($articles) > 20;
+    $articles = array_slice($articles, 0, 20);
 
-    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'keyword' => $keyword]);
+    $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'keyword' => $keyword, 'limited' => $limited]);
   }
 
   /**
@@ -142,6 +144,7 @@ class View {
     $year = $viewdata['year'] ?? "";
     $month = $viewdata['month'] ?? "";
     $keyword = $viewdata['keyword'] ?? "";
+    $limited = $viewdata['limited'] ?? false;
 
     $contents = "";
 
@@ -170,6 +173,9 @@ class View {
     }
     foreach($viewdata['articles'] as $article) {
       $contents .= $this->_view_daily($article);
+    }
+    if($limited) {
+      $contents .= "<p>制限以上ヒットしたため省略しました</p>";
     }
 
     $this->output(['title' => $viewdata['title'], 'contents' => $contents]);
