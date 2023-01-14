@@ -10,6 +10,7 @@ require 'config.php';
 class App {
   /** @var DB */
   private $db;
+  private $view;
 
   /**
    * コンストラクタ
@@ -19,6 +20,7 @@ class App {
   public function __construct(array $config)
   {
     $this->db = new DB($config['db_path']);
+    $this->view = new View();
   }
 
   /**
@@ -33,16 +35,16 @@ class App {
       case 'update':
         $this->update();
         break;
-      case 'view':
+      case 'show':
       default:
-        $this->view();
+        $this->show();
     }
   }
 
   /**
    * 日記表示画面
    */
-  private function view() : void
+  private function show() : void
   {
     $year = $_REQUEST['year'] ?? date('Y');
     $month = $_REQUEST['month'] ?? date('m');
@@ -69,7 +71,7 @@ class App {
     }
 
     $articles = $this->db->query($sql, $params);
-    if($keyword === '') {
+    if($keyword === '' && ($year < date('Y') || $year == date('Y') && $month <= date('m'))) {
       if($year == date('Y') && $month == date('m')) {
         $lastday = date('d');
       }
@@ -88,7 +90,7 @@ class App {
       });
     }
 
-    View::display_view(['articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
+    $this->view->display_show(['articles' => $articles, 'year' => $year, 'month' => $month, 'keyword' => $keyword]);
   }
 
   /**
@@ -100,7 +102,7 @@ class App {
     $month = $_REQUEST['month'] ?? date('m');
     $day = $_REQUEST['day'] ?? date('d');
     $article = $this->db->query("SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day", [':year' => $year, ':month' => $month, ':day' => $day])[0] ?? ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ""];
-    View::display_edit($article);
+    $this->view->display_edit($article);
   }
 
   /**
@@ -123,7 +125,7 @@ class View {
    *
    * @param array $viewdata 表示データ
    */
-  public static function display_view(array $viewdata) : void
+  public function display_show(array $viewdata) : void
   {
     $contents = "";
 
@@ -136,27 +138,27 @@ class View {
       </form>
       HTML;
     if($viewdata['year'] !== '' && $viewdata['month'] !== '') { // 年月指定あり
+      $contents .= "<div class=\"navi\"><ul>";
       $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
       $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "-1 month"));
+      if($prev_year < date('Y') || $prev_year == date('Y') && $prev_month <= date('m')) {
+        $contents .= "<li><a href=\"index.php?year={$prev_year}&amp;month={$prev_month}\">前月</a></li>";
+      }
       $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
       $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $viewdata['year'], $viewdata['month'], 1) . "+1 month"));
-      $contents .= <<<HTML
-        <div class="navi">
-          <ul>
-            <li><a href="index.php?year={$prev_year}&amp;month={$prev_month}">前月</a></li>
-            <li><a href="index.php?year={$next_year}&amp;month={$next_month}">翌月</a></li>
-          </ul>
-        </div>
-        HTML;
+      if($next_year < date('Y') || $next_year == date('Y') && $next_month <= date('m')) {
+        $contents .= "<li><a href=\"index.php?year={$next_year}&amp;month={$next_month}\">翌月</a></li>";
+      }
+      $contents .= '</ul></div>';
     }
     foreach($viewdata['articles'] as $article) {
-      $contents .= View::_view_daily($article);
+      $contents .= $this->_view_daily($article);
     }
 
-    View::output(['contents' => $contents]);
+    $this->output(['contents' => $contents]);
   }
 
-  private static function _view_daily(array $article) : string
+  private function _view_daily(array $article) : string
   {
     $contents = "";
 
@@ -165,7 +167,7 @@ class View {
     $message = "";
     if(!empty($article)) {
       foreach(explode("\n", str_replace(array("\r\n", "\r", "\n"), "\n", $article['message'])) as $_message) {
-        $message .= "<p>" . View::h($_message) . "</p>";
+        $message .= "<p>" . $this->h($_message) . "</p>";
       }
     }
 
@@ -186,13 +188,13 @@ class View {
    *
    * @param array $article 日記データ
    */
-  public static function display_edit(array $article) : void
+  public function display_edit(array $article) : void
   {
     $year = (int)$article['year'];
     $month = (int)$article['month'];
     $day = (int)$article['day'];
     $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
-    $message = View::h($article['message']);
+    $message = $this->h($article['message']);
 
     $contents = <<<HTML
       <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
@@ -206,7 +208,7 @@ class View {
         <input type="submit" value="更新">
       </form>
       HTML;
-    View::output(['contents' => $contents]);
+    $this->output(['contents' => $contents]);
   }
 
   /**
@@ -214,7 +216,7 @@ class View {
    *
    * @param array $viewdata 表示データ
    */
-  private static function output($viewdata) : void
+  private function output($viewdata) : void
   {
     print <<<HTML
       <!DOCTYPE html>
@@ -244,7 +246,7 @@ class View {
   * @param string $str エスケープする文字列
   * @return string エスケープ済文字列
   */
-  private static function h(string $str) : string
+  private function h(string $str) : string
   {
     return(htmlspecialchars($str, ENT_QUOTES, 'UTF-8'));
   }
