@@ -8,6 +8,8 @@ require 'config.php';
 }
 
 class App {
+  const SEARCH_LIMIT = 20;
+
   /** @var config */
   private $config;
   /** @var DB */
@@ -53,26 +55,26 @@ class App {
    */
   private function show() : void
   {
-    $year = $_REQUEST['year'] ?? date('Y');
-    $month = $_REQUEST['month'] ?? date('m');
+    $year = (int)($_GET['year'] ?? date('Y'));
+    $month = (int)($_GET['month'] ?? date('m'));
 
     $params = [
-      ':year' => (int)$year,
-      ':month' => (int)$month,
+      ':year' => $year,
+      ':month' => $month,
     ];
     $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
 
     $articles = $this->db->query($sql, $params);
-    if($year < date('Y') || $year == date('Y') && $month <= date('m')) {
-      if($year == date('Y') && $month == date('m')) {
-        $lastday = date('d');
+    if($year < (int)date('Y') || $year == (int)date('Y') && $month <= (int)date('m')) {
+      if($year == (int)date('Y') && $month == (int)date('m')) {
+        $lastday = (int)date('d');
       }
       else {
-        $lastday = date('t', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+        $lastday = (int)date('t', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
       }
       for($day = 1; $day <= $lastday; $day++) {
         if(count(array_filter($articles, function($article) use($year, $month, $day) {
-          return($article['year'] == $year && $article['month'] == $month && $article['day'] == $day);
+          return((int)$article['year'] === $year && (int)$article['month'] === $month && (int)$article['day'] === $day);
         })) == 0) {
           $articles[] = ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ''];
         }
@@ -101,8 +103,8 @@ class App {
     $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year DESC, month DESC, day DESC LIMIT 21";
 
     $articles = $this->db->query($sql, $params);
-    $limited = count($articles) > 20;
-    $articles = array_slice($articles, 0, 20);
+    $limited = count($articles) > App::SEARCH_LIMIT;
+    $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
 
     $this->view->display_show(['title' => $this->config['title'], 'articles' => $articles, 'keyword' => $keyword, 'limited' => $limited]);
   }
@@ -112,10 +114,22 @@ class App {
    */
   private function edit() : void
   {
-    $year = $_REQUEST['year'] ?? date('Y');
-    $month = $_REQUEST['month'] ?? date('m');
-    $day = $_REQUEST['day'] ?? date('d');
-    $article = $this->db->query("SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day", [':year' => $year, ':month' => $month, ':day' => $day])[0] ?? ['year' => $year, 'month' => $month, 'day' => $day, 'message' => ""];
+    $year = (int)($_REQUEST['year'] ?? date('Y'));
+    $month = (int)($_REQUEST['month'] ?? date('m'));
+    $day = (int)($_REQUEST['day'] ?? date('d'));
+    $article = $this->db->query(
+      "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
+      [
+        ':year' => $year,
+        ':month' => $month,
+        ':day' => $day
+      ])[0] ??
+      [
+        'year' => $year,
+        'month' => $month,
+        'day' => $day,
+        'message' => ""
+      ];
     $this->view->display_edit(['title' => $this->config['title'], 'article' => $article]);
   }
 
@@ -124,11 +138,18 @@ class App {
    */
   private function update() : void
   {
-    $year = $_REQUEST['year'];
-    $month = $_REQUEST['month'];
-    $day = $_REQUEST['day'];
+    $year = (int)($_REQUEST['year']);
+    $month = (int)($_REQUEST['month']);
+    $day = (int)($_REQUEST['day']);
     $message = $_REQUEST['message'];
-    $this->db->query("REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)", [':year' => $year, ':month' => $month, ':day' => $day, ':message' => $message]);
+    $this->db->query(
+      "REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)",
+      [
+        ':year' => $year,
+        ':month' => $month,
+        ':day' => $day,
+        ':message' => $message
+      ]);
     header("Location: index.php?year={$year}&month={$month}");
   }
 }
@@ -157,16 +178,16 @@ class View {
         <input type="submit" value="検索">
       </form>
       HTML;
-    if($year !== '' && $month !== '') { // 年月指定あり
+    if(!empty($year) && !empty($month)) { // 年月表示モード
       $contents .= "<div class=\"navi\"><ul>";
-      $prev_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
-      $prev_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month"));
-      if($prev_year < date('Y') || $prev_year == date('Y') && $prev_month <= date('m')) {
+      $prev_year = (int)(date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
+      $prev_month = (int)(date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
+      if($prev_year < (int)(date('Y')) || ($prev_year == (int)(date('Y')) && $prev_month <= (int)(date('m')))) {
         $contents .= "<li><a href=\"index.php?year={$prev_year}&amp;month={$prev_month}\">前月</a></li>";
       }
-      $next_year = date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
-      $next_month = date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month"));
-      if($next_year < date('Y') || $next_year == date('Y') && $next_month <= date('m')) {
+      $next_year = (int)(date('Y', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      $next_month = (int)(date('n', strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      if($next_year < (int)(date('Y')) || ($next_year == (int)(date('Y')) && $next_month <= (int)(date('m')))) {
         $contents .= "<li><a href=\"index.php?year={$next_year}&amp;month={$next_month}\">翌月</a></li>";
       }
       $contents .= '</ul></div>';
@@ -179,31 +200,6 @@ class View {
     }
 
     $this->output(['title' => $viewdata['title'], 'contents' => $contents]);
-  }
-
-  private function _view_daily(array $article) : string
-  {
-    $contents = "";
-
-    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $article['year'], $article['month'], $article['day'])))];
-
-    $message = "";
-    if(!empty($article)) {
-      foreach(explode("\n", str_replace(array("\r\n", "\r", "\n"), "\n", $article['message'])) as $_message) {
-        $message .= "<p>" . $this->h($_message) . "</p>";
-      }
-    }
-
-    $date = sprintf("%04d%02d%02d", $article['year'], $article['month'], $article['day']);
-    $contents .= <<<HTML
-      <div class="article" id="d{$date}">
-        <div class="date">{$article['year']}年{$article['month']}月{$article['day']}日({$weekday})</div>
-        <div class="links"><a href="index.php?mode=edit&amp;year={$article['year']}&amp;month={$article['month']}&amp;day={$article['day']}">編集</a></div>
-        <div class="message">{$message}</div>
-      </div>
-      HTML;
-
-    return($contents);
   }
 
   /**
@@ -241,18 +237,20 @@ class View {
    */
   private function output($viewdata) : void
   {
+    $title = $this->h($viewdata['title']);
+
     print <<<HTML
       <!DOCTYPE html>
       <html lang="ja">
         <head>
-          <title>{$viewdata['title']}</title>
+          <title>{$title}</title>
           <link rel="stylesheet" href="style.css" type="text/css" title="base">
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>
           <div id="container">
             <header id="header">
-              <h1><a href="index.php">{$viewdata['title']}</a></h1>
+              <h1><a href="index.php">{$title}</a></h1>
             </header>
             <div id="contents">
               {$viewdata['contents']}
@@ -263,6 +261,40 @@ class View {
         </body>
       </html>
       HTML;
+  }
+
+  /**
+   * 日記1日分表示
+   *
+   * @param array $article 1日分日記データ
+   */
+  private function _view_daily(array $article) : string
+  {
+    $contents = "";
+
+    $year = (int)$article['year'];
+    $month = (int)$article['month'];
+    $day = (int)$article['day'];
+
+    $weekday = ["日", "月", "火", "水", "木", "金", "土"][(int)date("w", strtotime(sprintf("%04d-%02d-%02d", $year, $month, $day)))];
+
+    $message = "";
+    if(!empty($article)) {
+      foreach(explode("\n", str_replace(array("\r\n", "\r", "\n"), "\n", $article['message'])) as $_message) {
+        $message .= "<p>" . $this->h($_message) . "</p>";
+      }
+    }
+
+    $date = sprintf("%04d%02d%02d", $year, $month, $day);
+    $contents .= <<<HTML
+      <div class="article" id="d{$date}">
+        <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+        <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+        <div class="message">{$message}</div>
+      </div>
+      HTML;
+
+    return($contents);
   }
 
   /**
