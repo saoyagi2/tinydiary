@@ -33,20 +33,17 @@ class App {
    */
   public function run() : void
   {
-    $mode = $_REQUEST["mode"] ?? "";
-    switch($mode) {
-      case "edit":
-        $this->edit();
-        break;
-      case "update":
-        $this->update();
-        break;
-      case "search":
-        $this->search();
-        break;
-      case "show":
-      default:
-        $this->show();
+    if($_POST["mode"] === "update") {
+      $this->update();
+    }
+    elseif($_GET["mode"] === "edit") {
+      $this->edit();
+    }
+    elseif($_GET["mode"] === "search") {
+      $this->search();
+    }
+    else {
+      $this->show();
     }
   }
 
@@ -92,7 +89,7 @@ class App {
    */
   private function search() : void
   {
-    $keyword = $_REQUEST["keyword"] ?? "";
+    $keyword = $_GET["keyword"] ?? "";
 
     $wheres = [];
     $params = [];
@@ -114,9 +111,9 @@ class App {
    */
   private function edit() : void
   {
-    $year = (int)($_REQUEST["year"] ?? date("Y"));
-    $month = (int)($_REQUEST["month"] ?? date("m"));
-    $day = (int)($_REQUEST["day"] ?? date("d"));
+    $year = (int)($_GET["year"] ?? date("Y"));
+    $month = (int)($_GET["month"] ?? date("m"));
+    $day = (int)($_GET["day"] ?? date("d"));
     $article = $this->db->query(
       "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
       [
@@ -138,10 +135,10 @@ class App {
    */
   private function update() : void
   {
-    $year = (int)($_REQUEST["year"]);
-    $month = (int)($_REQUEST["month"]);
-    $day = (int)($_REQUEST["day"]);
-    $message = $_REQUEST["message"];
+    $year = (int)($_POST["year"]);
+    $month = (int)($_POST["month"]);
+    $day = (int)($_POST["day"]);
+    $message = $_POST["message"];
     $this->db->query(
       "REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)",
       [
