@@ -98,9 +98,9 @@ class App {
     $params = [];
     foreach(explode(" ", $keyword) as $_keyword) {
       $wheres[] = "message LIKE ?";
-      $params[] = "%{$_keyword}%";
+      $params[] = "%" . preg_replace('/(?=[!_%])/', '!', $_keyword) . "%";
     }
-    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year DESC, month DESC, day DESC LIMIT 21";
+    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
 
     $articles = $this->db->query($sql, $params);
     $limited = count($articles) > App::SEARCH_LIMIT;
