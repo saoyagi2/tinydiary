@@ -232,18 +232,32 @@ class View {
       $thisyear = (int)date("Y");
       $thismonth = (int)date("m");
 
-      $contents .= "<div class=\"navi\"><ul>";
+      $contents .= <<<HTML
+        <div class="navi">
+          <ul>
+        HTML;
       $prev_year = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
       $prev_month = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
       if($prev_year < $thisyear || ($prev_year == $thisyear && $prev_month <= $thismonth)) {
-        $contents .= "<li><a href=\"index.php?year={$prev_year}&amp;month={$prev_month}\">前月</a></li>";
+        $contents .= <<<HTML
+          <li>
+            <a href="index.php?year={$prev_year}&amp;month={$prev_month}">前月</a>
+          </li>
+          HTML;
       }
       $next_year = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       $next_month = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       if($next_year < $thisyear || ($next_year == $thisyear && $next_month <= $thismonth)) {
-        $contents .= "<li><a href=\"index.php?year={$next_year}&amp;month={$next_month}\">翌月</a></li>";
+        $contents .= <<<HTML
+          <li>
+            <a href="index.php?year={$next_year}&amp;month={$next_month}">翌月</a>
+          </li>
+          HTML;
       }
-      $contents .= "</ul></div>";
+      $contents .= <<<HTML
+          </ul>
+        </div>
+        HTML;
     }
 
     $displayyear = 0;
@@ -255,14 +269,13 @@ class View {
       $weekday = $this->weekday($year, $month, $day);
 
       if($displayyear !== $year || $displaymonth !== $month) {
-        $contents .= "<div class=\"yearmonth\"><h2><a href=\"index.php?year={$year}&amp;month={$month}\">{$year}年{$month}月</a></h2></div>";
+        $contents .= <<<HTML
+          <div class="yearmonth">
+            <h2><a href="index.php?year={$year}&amp;month={$month}">{$year}年{$month}月</a></h2>
+          </div>
+          HTML;
         $displayyear = $year;
         $displaymonth = $month;
-      }
-
-      $message = "";
-      foreach(preg_split("/\R/", $article["message"]) as $_message) {
-        $message .= "<p>" . $this->h($_message) . "</p>";
       }
 
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
@@ -270,7 +283,13 @@ class View {
         <div class="article" id="d{$date}">
           <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
           <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
-          <div class="message">{$message}</div>
+          <div class="message">
+        HTML;
+      foreach(preg_split("/\R/", $article["message"]) as $_message) {
+        $contents .= "<p>" . $this->h($_message) . "</p>";
+      }
+      $contents .= <<<HTML
+          </div>
         </div>
         HTML;
     }
