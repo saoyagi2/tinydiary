@@ -224,7 +224,7 @@ class View {
       </form>
       HTML;
 
-    if(empty($keyword)) { // 年月表示モードなら前月・翌月ナビ表示
+    if($year !== 0 && $month !== 0) { // 年月表示モードなら前月・翌月ナビ表示
       $thisyear = (int)date("Y");
       $thismonth = (int)date("m");
 
