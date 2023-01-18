@@ -247,9 +247,9 @@ class View {
 
     $contents .= <<<HTML
       <form action="index.php?mode=view" method="GET">
+        <input type="hidden" name="mode" value="search">
         <label>検索:
-          <input type="hidden" name="mode" value="search">
-          <input type="type" name="keyword" value="{$keyword}">
+          <input type="text" name="keyword" value="{$keyword}">
         </label>
         <input type="submit" value="検索">
       </form>
