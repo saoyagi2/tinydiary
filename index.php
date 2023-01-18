@@ -234,7 +234,14 @@ class View {
       $contents .= "</ul></div>";
     }
 
+    $displayyear = 0;
+    $displaymonth = 0;
     foreach($viewdata["articles"] as $article) {
+      if($displayyear !== (int)$article['year'] || $displaymonth !== (int)$article['month']) {
+        $displayyear = (int)$article['year'];
+        $displaymonth = (int)$article['month'];
+        $contents .= "<div class=\"yearmonth\"><h2>{$displayyear}年{$displaymonth}月</h2></div>";
+      }
       $contents .= $this->_display_daily($article);
     }
     if($search_limited) {
@@ -327,7 +334,7 @@ class View {
     $date = sprintf("%04d%02d%02d", $year, $month, $day);
     $contents .= <<<HTML
       <div class="article" id="d{$date}">
-        <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+        <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
         <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
         <div class="message">{$message}</div>
       </div>
