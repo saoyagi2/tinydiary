@@ -62,14 +62,18 @@ class App {
     $year = (int)($_GET["year"] ?? date("Y"));
     $month = (int)($_GET["month"] ?? date("m"));
 
-    $params = [
-      ":year" => $year,
-      ":month" => $month,
-    ];
-    $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
-    $articles = $this->db->query($sql, $params);
-
-    $articles = $this->interpolate_articles($articles, $year, $month);
+    if(checkdate($month, 1, $year)) {
+      $params = [
+        ":year" => $year,
+        ":month" => $month,
+      ];
+      $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
+      $articles = $this->db->query($sql, $params);
+      $articles = $this->interpolate_articles($articles, $year, $month);
+    }
+    else {
+      $articles = [];
+    }
 
     $this->view->display_show(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month]);
   }
@@ -224,7 +228,7 @@ class View {
       </form>
       HTML;
 
-    if($year !== 0 && $month !== 0) { // 年月表示モードなら前月・翌月ナビ表示
+    if(checkdate($month, 1, $year)) { // 年月表示モードなら前月・翌月ナビ表示
       $thisyear = (int)date("Y");
       $thismonth = (int)date("m");
 
