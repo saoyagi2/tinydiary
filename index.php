@@ -237,12 +237,30 @@ class View {
     $displayyear = 0;
     $displaymonth = 0;
     foreach($viewdata["articles"] as $article) {
-      if($displayyear !== (int)$article['year'] || $displaymonth !== (int)$article['month']) {
-        $displayyear = (int)$article['year'];
-        $displaymonth = (int)$article['month'];
+      $year = (int)$article["year"];
+      $month = (int)$article["month"];
+      $day = (int)$article["day"];
+      $weekday = $this->weekday($year, $month, $day);
+
+      if($displayyear !== $year || $displaymonth !== $month) {
+        $displayyear = $year;
+        $displaymonth = $month;
         $contents .= "<div class=\"yearmonth\"><h2>{$displayyear}年{$displaymonth}月</h2></div>";
       }
-      $contents .= $this->_display_daily($article);
+
+      $message = "";
+      foreach(preg_split("/\R/", $article["message"]) as $_message) {
+        $message .= "<p>" . $this->h($_message) . "</p>";
+      }
+
+      $date = sprintf("%04d%02d%02d", $year, $month, $day);
+      $contents .= <<<HTML
+        <div class="article" id="d{$date}">
+          <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
+          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+          <div class="message">{$message}</div>
+        </div>
+        HTML;
     }
     if($search_limited) {
       $contents .= "<p>制限以上ヒットしたため省略しました</p>";
@@ -310,37 +328,6 @@ class View {
         </body>
       </html>
       HTML;
-  }
-
-  /**
-   * 日記1日分表示
-   *
-   * @param array $article 1日分日記データ
-   */
-  private function _display_daily(array $article) : string
-  {
-    $contents = "";
-
-    $year = (int)$article["year"];
-    $month = (int)$article["month"];
-    $day = (int)$article["day"];
-    $weekday = $this->weekday($year, $month, $day);
-
-    $message = "";
-    foreach(preg_split("/\R/", $article["message"]) as $_message) {
-      $message .= "<p>" . $this->h($_message) . "</p>";
-    }
-
-    $date = sprintf("%04d%02d%02d", $year, $month, $day);
-    $contents .= <<<HTML
-      <div class="article" id="d{$date}">
-        <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
-        <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
-        <div class="message">{$message}</div>
-      </div>
-      HTML;
-
-    return($contents);
   }
 
   /**
