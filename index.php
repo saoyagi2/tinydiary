@@ -243,9 +243,9 @@ class View {
       $weekday = $this->weekday($year, $month, $day);
 
       if($displayyear !== $year || $displaymonth !== $month) {
+        $contents .= "<div class=\"yearmonth\"><h2><a href=\"index.php?year={$year}&amp;month={$month}\">{$year}年{$month}月</a></h2></div>";
         $displayyear = $year;
         $displaymonth = $month;
-        $contents .= "<div class=\"yearmonth\"><h2>{$displayyear}年{$displaymonth}月</h2></div>";
       }
 
       $message = "";
