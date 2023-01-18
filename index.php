@@ -1,6 +1,11 @@
 <?php
 require "config.php";
 
+use App;
+use View;
+use Database;
+use PDO;
+
 {
   $app = new App($config);
   $app->run();
@@ -13,8 +18,8 @@ require "config.php";
 class App {
   /** @var array config 設定情報 */
   private $config;
-  /** @var DB $db データベースオブジェクト */
-  private $db;
+  /** @var Database $db データベースオブジェクト */
+  private $database;
   /** @var View $view 表示オブジェクト */
   private $view;
 
@@ -29,7 +34,7 @@ class App {
   public function __construct(array $config)
   {
     $this->config = $config;
-    $this->db = new DB($this->config["db_path"]);
+    $this->database = new Database($this->config["db_path"]);
     $this->view = new View();
   }
 
@@ -38,15 +43,15 @@ class App {
    */
   public function run() : void
   {
-    $mode = $_POST["mode"] ?? $_GET["mode"] ?? "";
-    $method = $_SERVER["REQUEST_METHOD"];
-    if($method === "POST" && $mode === "update") {
+    $getMode = $this->getParam("mode", "GET");
+    $postMode = $this->getParam("mode", "POST");
+    if($postMode === "update") {
       $this->update();
     }
-    elseif($method === "GET" && $mode === "edit") {
+    elseif($getMode === "edit") {
       $this->edit();
     }
-    elseif($method === "GET" && $mode === "search") {
+    elseif($getMode === "search") {
       $this->search();
     }
     else {
@@ -59,8 +64,8 @@ class App {
    */
   private function show() : void
   {
-    $year = (int)($_GET["year"] ?? date("Y"));
-    $month = (int)($_GET["month"] ?? date("m"));
+    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
+    $month = (int)($this->getParam("month", "GET") ?? date("m"));
 
     if(checkdate($month, 1, $year)) {
       $params = [
@@ -68,14 +73,14 @@ class App {
         ":month" => $month,
       ];
       $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
-      $articles = $this->db->query($sql, $params);
-      $articles = $this->interpolate_articles($articles, $year, $month);
+      $articles = $this->database->query($sql, $params);
+      $articles = $this->interpolateArticles($articles, $year, $month);
     }
     else {
       $articles = [];
     }
 
-    $this->view->display_show(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month]);
   }
 
   /**
@@ -83,29 +88,29 @@ class App {
    */
   private function search() : void
   {
-    $keyword = $_GET["keyword"] ?? "";
+    $keyword = $this->getParam("keyword", "GET") ?? "";
 
     $wheres = [];
     $params = [];
-    foreach(explode(" ", $keyword) as $_keyword) {
-      if(empty($_keyword)) {
+    foreach(explode(" ", $keyword) as $fragment) {
+      if(empty($fragment)) {
         continue;
       }
       $wheres[] = "message LIKE ?";
-      $params[] = "%" . preg_replace('/(?=[!_%])/', '!', $_keyword) . "%";
+      $params[] = "%" . preg_replace('/(?=[!_%])/', '!', $fragment) . "%";
     }
     if(!empty($wheres)) {
       $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
-      $articles = $this->db->query($sql, $params);
-      $search_limited = count($articles) > App::SEARCH_LIMIT;
+      $articles = $this->database->query($sql, $params);
+      $searchLimited = count($articles) > App::SEARCH_LIMIT;
       $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
     }
     else {
       $articles = [];
-      $search_limited = false;
+      $searchLimited = false;
     }
 
-    $this->view->display_show(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "search_limited" => $search_limited]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited]);
   }
 
   /**
@@ -113,10 +118,10 @@ class App {
    */
   private function edit() : void
   {
-    $year = (int)($_GET["year"] ?? date("Y"));
-    $month = (int)($_GET["month"] ?? date("m"));
-    $day = (int)($_GET["day"] ?? date("d"));
-    $article = $this->db->query(
+    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
+    $month = (int)($this->getParam("month", "GET") ?? date("m"));
+    $day = (int)($this->getParam("day", "GET") ?? date("d"));
+    $article = $this->database->query(
       "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
       [
         ":year" => $year,
@@ -132,7 +137,7 @@ class App {
       ];
     }
 
-    $this->view->display_edit(["title" => $this->config["title"], "article" => $article]);
+    $this->view->displayEdit(["title" => $this->config["title"], "article" => $article]);
   }
 
   /**
@@ -140,16 +145,16 @@ class App {
    */
   private function update() : void
   {
-    $year = (int)($_POST["year"] ?? 0);
-    $month = (int)($_POST["month"] ?? 0);
-    $day = (int)($_POST["day"] ?? 0);
-    $message = $_POST["message"] ?? "";
+    $year = (int)($this->getParam("year", "POST") ?? 0);
+    $month = (int)($this->getParam("month", "POST") ?? 0);
+    $day = (int)($this->getParam("day", "POST") ?? 0);
+    $message = $this->getParam("message", "POST") ?? "";
     if(!checkdate($month, $day, $year)) {
       header("Location: index.php");
       return;
     }
 
-    $this->db->query(
+    $this->database->query(
       "REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)",
       [
         ":year" => $year,
@@ -169,23 +174,23 @@ class App {
    * @param int $month 月
    * @return arrray $articles 補完済日記データ
    */
-  private function interpolate_articles($articles, $year, $month) : array
+  private function interpolateArticles($articles, $year, $month) : array
   {
-    $thisyear = (int)date("Y");
-    $thismonth = (int)date("m");
+    $thisYear = (int)date("Y");
+    $thisMonth = (int)date("m");
 
     // 来月以降の日記は表示しない
-    if($year > $thisyear || ($year == $thisyear && $month > $thismonth)) {
+    if($year > $thisYear || ($year == $thisYear && $month > $thisMonth)) {
       return([]);
     }
 
-    if($year == $thisyear && $month == $thismonth) {
-      $lastday = (int)date("d");
+    if($year == $thisYear && $month == $thisMonth) {
+      $lastDay = (int)date("d");
     }
     else {
-      $lastday = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+      $lastDay = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
     }
-    for($day = 1; $day <= $lastday; $day++) {
+    for($day = 1; $day <= $lastDay; $day++) {
       if(count(array_filter($articles, function($article) use($year, $month, $day) {
         return((int)$article["year"] === $year && (int)$article["month"] === $month && (int)$article["day"] === $day);
       })) == 0) {
@@ -198,6 +203,28 @@ class App {
 
     return($articles);
   }
+
+  /**
+   * パラメータ取得
+   *
+   * @param string $key パラメータ名
+   * @param string $method メソッド(GET, POST)
+   * @return ?string パラメータ値
+   */
+  private function getParam(string $key, string $method) : ?string
+  {
+    switch($method) {
+      case 'GET':
+        $param = $_GET[$key] ?? NULL;
+        break;
+      case 'POST':
+        $param = $_POST[$key] ?? NULL;
+        break;
+      default:
+        $param = NULL;
+    }
+    return($param);
+  }
 }
 
 /**
@@ -207,14 +234,14 @@ class View {
   /**
    * 表示画面
    *
-   * @param array $viewdata 表示データ
+   * @param array $viewData 表示データ
    */
-  public function display_show(array $viewdata) : void
+  public function displayShow(array $viewData) : void
   {
-    $year = (int)($viewdata["year"] ?? 0);
-    $month = (int)($viewdata["month"] ?? 0);
-    $keyword = $viewdata["keyword"] ?? "";
-    $search_limited = $viewdata["search_limited"] ?? false;
+    $year = (int)($viewData["year"] ?? 0);
+    $month = (int)($viewData["month"] ?? 0);
+    $keyword = $viewData["keyword"] ?? "";
+    $searchLimited = $viewData["searchLimited"] ?? false;
 
     $contents = "";
 
@@ -229,28 +256,28 @@ class View {
       HTML;
 
     if(checkdate($month, 1, $year)) { // 年月表示モードなら前月・翌月ナビ表示
-      $thisyear = (int)date("Y");
-      $thismonth = (int)date("m");
+      $thisYear = (int)date("Y");
+      $thisMonth = (int)date("m");
 
       $contents .= <<<HTML
         <div class="navi">
           <ul>
         HTML;
-      $prev_year = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
-      $prev_month = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
-      if($prev_year < $thisyear || ($prev_year == $thisyear && $prev_month <= $thismonth)) {
+      $prevYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
+      $prevMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
+      if($prevYear < $thisYear || ($prevYear == $thisYear && $prevMonth <= $thisMonth)) {
         $contents .= <<<HTML
           <li>
-            <a href="index.php?year={$prev_year}&amp;month={$prev_month}">前月</a>
+            <a href="index.php?year={$prevYear}&amp;month={$prevMonth}">前月</a>
           </li>
           HTML;
       }
-      $next_year = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
-      $next_month = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
-      if($next_year < $thisyear || ($next_year == $thisyear && $next_month <= $thismonth)) {
+      $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      if($nextYear < $thisYear || ($nextYear == $thisYear && $nextMonth <= $thisMonth)) {
         $contents .= <<<HTML
           <li>
-            <a href="index.php?year={$next_year}&amp;month={$next_month}">翌月</a>
+            <a href="index.php?year={$nextYear}&amp;month={$nextMonth}">翌月</a>
           </li>
           HTML;
       }
@@ -260,22 +287,22 @@ class View {
         HTML;
     }
 
-    $displayyear = 0;
-    $displaymonth = 0;
-    foreach($viewdata["articles"] as $article) {
+    $displayYear = 0;
+    $displayMonth = 0;
+    foreach($viewData["articles"] as $article) {
       $year = (int)$article["year"];
       $month = (int)$article["month"];
       $day = (int)$article["day"];
       $weekday = $this->weekday($year, $month, $day);
 
-      if($displayyear !== $year || $displaymonth !== $month) {
+      if($displayYear !== $year || $displayMonth !== $month) {
         $contents .= <<<HTML
           <div class="yearmonth">
             <h2><a href="index.php?year={$year}&amp;month={$month}">{$year}年{$month}月</a></h2>
           </div>
           HTML;
-        $displayyear = $year;
-        $displaymonth = $month;
+        $displayYear = $year;
+        $displayMonth = $month;
       }
 
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
@@ -285,33 +312,33 @@ class View {
           <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
           <div class="message">
         HTML;
-      foreach(preg_split("/\R/", $article["message"]) as $_message) {
-        $contents .= "<p>" . $this->h($_message) . "</p>";
+      foreach(preg_split("/\R/", $article["message"]) as $fragment) {
+        $contents .= "<p>" . $this->h($fragment) . "</p>";
       }
       $contents .= <<<HTML
           </div>
         </div>
         HTML;
     }
-    if($search_limited) {
+    if($searchLimited) {
       $contents .= "<p>制限以上ヒットしたため省略しました</p>";
     }
 
-    $this->output(["title" => $viewdata["title"], "contents" => $contents]);
+    $this->output(["title" => $viewData["title"], "contents" => $contents]);
   }
 
   /**
    * 編集画面
    *
-   * @param array $viewdata 表示データ
+   * @param array $viewData 表示データ
    */
-  public function display_edit(array $viewdata) : void
+  public function displayEdit(array $viewData) : void
   {
-    $year = (int)$viewdata["article"]["year"];
-    $month = (int)$viewdata["article"]["month"];
-    $day = (int)$viewdata["article"]["day"];
+    $year = (int)$viewData["article"]["year"];
+    $month = (int)$viewData["article"]["month"];
+    $day = (int)$viewData["article"]["day"];
     $weekday = $this->weekday($year, $month, $day);
-    $message = $this->h($viewdata["article"]["message"]);
+    $message = $this->h($viewData["article"]["message"]);
 
     $contents = <<<HTML
       <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
@@ -325,17 +352,17 @@ class View {
         <input type="submit" value="更新">
       </form>
       HTML;
-    $this->output(["title" => $viewdata["title"], "contents" => $contents]);
+    $this->output(["title" => $viewData["title"], "contents" => $contents]);
   }
 
   /**
    * 出力
    *
-   * @param array $viewdata 表示データ
+   * @param array $viewData 表示データ
    */
-  private function output($viewdata) : void
+  private function output($viewData) : void
   {
-    $title = $this->h($viewdata["title"]);
+    $title = $this->h($viewData["title"]);
 
     print <<<HTML
       <!DOCTYPE html>
@@ -351,7 +378,7 @@ class View {
               <h1><a href="index.php">{$title}</a></h1>
             </header>
             <div id="contents">
-              {$viewdata["contents"]}
+              {$viewData["contents"]}
             </div>
             <footer id="footer">
             </footer>
@@ -390,20 +417,20 @@ class View {
 /**
  * データベース操作クラス
  */
-class DB {
+class Database {
   /** @var PDO */
-  private $db_conn = NULL;
+  private $conn = NULL;
 
   /**
    * コンストラクタ
    *
-   * @param string $db_path DBファイルへのパス
+   * @param string $dbPath データベースファイルへのパス
    */
-  public function __construct(string $db_path)
+  public function __construct(string $dbPath)
   {
     try {
-      $this->connect_database($db_path);
-      $this->create_schema();
+      $this->connectDatabase($dbPath);
+      $this->createSchema();
     }
     catch(PDOException $e) {
       print $e->getMessage();
@@ -414,11 +441,11 @@ class DB {
   /**
    * DB接続
    *
-   * @param string $db_path DBファイルへのパス
+   * @param string $dbPath データベースファイルへのパス
    */
-  private function connect_database(string $db_path) : void
+  private function connectDatabase(string $dbPath) : void
   {
-    $this->db_conn = new PDO("sqlite:" . __DIR__ . "/" . $db_path, NULL, NULL, [
+    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, NULL, NULL, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
@@ -427,16 +454,16 @@ class DB {
   /**
    * スキーマ作成
    */
-  private function create_schema() : void
+  private function createSchema() : void
   {
-    $this->db_conn->exec("CREATE TABLE IF NOT EXISTS articles(
+    $this->conn->exec("CREATE TABLE IF NOT EXISTS articles(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       year INTGER NOT NULL,
       month INTGER NOT NULL,
       day INTGER NOT NULL,
       message TEXT
     )");
-    $this->db_conn->exec("CREATE UNIQUE INDEX IF NOT EXISTS article_ymd_idx ON articles (year, month, day)");
+    $this->conn->exec("CREATE UNIQUE INDEX IF NOT EXISTS article_ymd_idx ON articles (year, month, day)");
   }
 
   /**
@@ -448,7 +475,7 @@ class DB {
    */
   function query(string $sql, array $params = []) : array
   {
-    $stmt = $this->db_conn->prepare($sql);
+    $stmt = $this->conn->prepare($sql);
     $stmt->execute($params);
     return($stmt->fetchAll());
   }
