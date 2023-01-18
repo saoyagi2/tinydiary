@@ -84,14 +84,22 @@ class App {
     $wheres = [];
     $params = [];
     foreach(explode(" ", $keyword) as $_keyword) {
+      if(empty($_keyword)) {
+        continue;
+      }
       $wheres[] = "message LIKE ?";
       $params[] = "%" . preg_replace('/(?=[!_%])/', '!', $_keyword) . "%";
     }
-    $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
-
-    $articles = $this->db->query($sql, $params);
-    $search_limited = count($articles) > App::SEARCH_LIMIT;
-    $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
+    if(!empty($wheres)) {
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
+      $articles = $this->db->query($sql, $params);
+      $search_limited = count($articles) > App::SEARCH_LIMIT;
+      $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
+    }
+    else {
+      $articles = [];
+      $search_limited = false;
+    }
 
     $this->view->display_show(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "search_limited" => $search_limited]);
   }
