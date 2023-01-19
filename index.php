@@ -22,6 +22,8 @@ class App {
   private $database;
   /** @var View $view 表示オブジェクト */
   private $view;
+  /** @var View $logined ログイン状態フラグ */
+  private $logined;
 
   /** @var int 検索件数上限 */ 
   const SEARCH_LIMIT = 20;
@@ -36,6 +38,9 @@ class App {
     $this->config = $config;
     $this->database = new Database($this->config["db_path"]);
     $this->view = new View();
+
+    session_start();
+    $this->logined = $_SESSION['logined'] ?? FALSE;
   }
 
   /**
@@ -45,6 +50,12 @@ class App {
   {
     $getMode = $this->getParam("mode", "GET");
     $postMode = $this->getParam("mode", "POST");
+    if($postMode === "login") {
+      $this->login();
+    }
+    if($getMode === "logout") {
+      $this->logout();
+    }
     if($postMode === "update") {
       $this->update();
     }
@@ -80,7 +91,7 @@ class App {
       $articles = [];
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month, "logined" => $this->logined]);
   }
 
   /**
@@ -110,7 +121,7 @@ class App {
       $searchLimited = false;
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited, "logined" => $this->logined]);
   }
 
   /**
@@ -118,6 +129,11 @@ class App {
    */
   private function edit() : void
   {
+    if(!$this->logined) {
+      header("Location: index.php");
+      return;
+    }
+
     $year = (int)($this->getParam("year", "GET") ?? date("Y"));
     $month = (int)($this->getParam("month", "GET") ?? date("m"));
     $day = (int)($this->getParam("day", "GET") ?? date("d"));
@@ -145,6 +161,11 @@ class App {
    */
   private function update() : void
   {
+    if(!$this->logined) {
+      header("Location: index.php");
+      return;
+    }
+
     $year = (int)($this->getParam("year", "POST") ?? 0);
     $month = (int)($this->getParam("month", "POST") ?? 0);
     $day = (int)($this->getParam("day", "POST") ?? 0);
@@ -164,6 +185,26 @@ class App {
       ]);
 
     header("Location: index.php?year={$year}&month={$month}");
+  }
+
+  /**
+   * ログイン
+   */
+  private function login() : void
+  {
+    if(hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
+      $_SESSION['logined'] = TRUE;
+    }
+    header("Location: index.php");
+  }
+
+  /**
+   * ログアウト
+   */
+  private function logout() : void
+  {
+    $_SESSION['logined'] = FALSE;
+    header("Location: index.php");
   }
 
   /**
@@ -242,6 +283,7 @@ class View {
     $month = (int)($viewData["month"] ?? 0);
     $keyword = $viewData["keyword"] ?? "";
     $searchLimited = $viewData["searchLimited"] ?? false;
+    $logined = $viewData["logined"] ?? false;
 
     $contents = "";
 
@@ -309,7 +351,13 @@ class View {
       $contents .= <<<HTML
         <div class="article" id="d{$date}">
           <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
-          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+        HTML;
+        if($logined) {
+          $contents .= <<<HTML
+            <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+            HTML;
+        }
+        $contents .= <<<HTML
           <div class="message">
         HTML;
       foreach(preg_split("/\R/", $article["message"]) as $fragment) {
@@ -322,6 +370,23 @@ class View {
     }
     if($searchLimited) {
       $contents .= "<p>制限以上ヒットしたため省略しました</p>";
+    }
+
+    if($logined) {
+      $contents .= <<<HTML
+        <a href="index.php?mode=logout">ログアウト</a>
+        HTML;
+    }
+    else {
+      $contents .= <<<HTML
+        <form action="index.php" method="POST">
+          <input type="hidden" name="mode" value="login">
+          <label>パスワード:
+            <input type="password" name="password">
+          </label>
+          <input type="submit" value="ログイン">
+        </form>
+        HTML;
     }
 
     $this->output(["title" => $viewData["title"], "contents" => $contents]);
