@@ -242,6 +242,7 @@ class View {
     $month = (int)($viewData["month"] ?? 0);
     $keyword = $viewData["keyword"] ?? "";
     $searchLimited = $viewData["searchLimited"] ?? false;
+    $logined = $viewData["logined"] ?? false;
 
     $contents = "";
 
@@ -322,6 +323,18 @@ class View {
     }
     if($searchLimited) {
       $contents .= "<p>制限以上ヒットしたため省略しました</p>";
+    }
+
+    if(!$logined) {
+      $contents .= <<<HTML
+        <form action="index.php" method="POST">
+          <input type="hidden" name="mode" value="login">
+          <label>パスワード:
+            <input type="password" name="password">
+          </label>
+          <input type="submit" value="ログイン">
+        </form>
+        HTML;
     }
 
     $this->output(["title" => $viewData["title"], "contents" => $contents]);
