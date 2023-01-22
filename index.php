@@ -91,7 +91,14 @@ class App {
       $articles = [];
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month, "logined" => $this->logined, 'csrf_token' => $this->getCsrfToken()]);
+    $this->view->displayShow([
+      "title" => $this->config["title"],
+      "articles" => $articles,
+      "year" => $year,
+      "month" => $month,
+      "logined" => $this->logined,
+      'csrf_token' => $this->getCsrfToken()
+    ]);
   }
 
   /**
@@ -121,7 +128,14 @@ class App {
       $searchLimited = false;
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited, "logined" => $this->logined, 'csrf_token' => $this->getCsrfToken()]);
+    $this->view->displayShow([
+      "title" => $this->config["title"],
+      "articles" => $articles,
+      "keyword" => $keyword,
+      "searchLimited" => $searchLimited,
+      "logined" => $this->logined,
+      'csrf_token' => $this->getCsrfToken()
+    ]);
   }
 
   /**
@@ -153,7 +167,10 @@ class App {
       ];
     }
 
-    $this->view->displayEdit(["title" => $this->config["title"], "article" => $article]);
+    $this->view->displayEdit([
+      "title" => $this->config["title"],
+      "article" => $article
+    ]);
   }
 
   /**
