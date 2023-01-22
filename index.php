@@ -91,7 +91,7 @@ class App {
       $articles = [];
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month, "logined" => $this->logined]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "year" => $year, "month" => $month, "logined" => $this->logined, 'csrf_token' => $this->getCsrfToken()]);
   }
 
   /**
@@ -121,7 +121,7 @@ class App {
       $searchLimited = false;
     }
 
-    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited, "logined" => $this->logined]);
+    $this->view->displayShow(["title" => $this->config["title"], "articles" => $articles, "keyword" => $keyword, "searchLimited" => $searchLimited, "logined" => $this->logined, 'csrf_token' => $this->getCsrfToken()]);
   }
 
   /**
@@ -192,7 +192,8 @@ class App {
    */
   private function login() : void
   {
-    if(hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
+    $form_token = $this->getParam("csrf_token", "POST");
+    if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
       $_SESSION['logined'] = TRUE;
     }
     header("Location: index.php");
@@ -265,6 +266,32 @@ class App {
         $param = NULL;
     }
     return($param);
+  }
+
+  /**
+   * CSRF対策トークン生成
+   *
+   * @return $string CSRF対策トークン
+   */
+  private function getCsrfToken() : string
+  {
+    $token = bin2hex(random_bytes(32));
+    $_SESSION["csrf_token"] = $token;
+    return($token);
+  }
+
+  /**
+   * CSRF対策トークン照合
+   *
+   * @param string form_token FORMから渡されたCSRF対策トークン
+   * @retrun bool 照合結果(trueなら正常、falseなら不正)
+   */
+  private function checkCsrfToken(string $form_token) : bool
+  {
+    $csrf_token = $_SESSION["csrf_token"];
+    unset($_SESSION["csrf_token"]);
+    $result = hash_equals($csrf_token, $form_token);
+    return(hash_equals($csrf_token, $form_token));
   }
 }
 
@@ -378,9 +405,11 @@ class View {
         HTML;
     }
     else {
+      $csrf_token = $this->h($viewData["csrf_token"]);
       $contents .= <<<HTML
         <form action="index.php" method="POST">
           <input type="hidden" name="mode" value="login">
+          <input type="hidden" name="csrf_token" value="{$csrf_token}">
           <label>パスワード:
             <input type="password" name="password">
           </label>
