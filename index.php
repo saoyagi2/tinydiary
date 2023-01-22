@@ -169,7 +169,8 @@ class App {
 
     $this->view->displayEdit([
       "title" => $this->config["title"],
-      "article" => $article
+      "article" => $article,
+      'csrf_token' => $this->getCsrfToken()
     ]);
   }
 
@@ -178,7 +179,8 @@ class App {
    */
   private function update() : void
   {
-    if(!$this->logined) {
+    $form_token = $this->getParam("csrf_token", "POST");
+    if(!$this->logined || !$this->checkCsrfToken($form_token)) {
       header("Location: index.php");
       return;
     }
@@ -450,12 +452,14 @@ class View {
     $day = (int)$viewData["article"]["day"];
     $weekday = $this->weekday($year, $month, $day);
     $message = $this->h($viewData["article"]["message"]);
+    $csrf_token = $this->h($viewData["csrf_token"]);
 
     $contents = <<<HTML
       <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
       <div class="message">
       <form action="index.php" method="POST">
         <input type="hidden" name="mode" value="update">
+        <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <input type="hidden" name="year" value="${year}">
         <input type="hidden" name="month" value="${month}">
         <input type="hidden" name="day" value="${day}">
