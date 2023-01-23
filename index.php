@@ -147,7 +147,7 @@ class App {
   {
     if(!$this->logined) {
       $this->set_notice("ログインしていません");
-      header("Location: index.php");
+      header("Location: " . $this->get_full_url());
       return;
     }
 
@@ -186,7 +186,7 @@ class App {
     $form_token = $this->getParam("csrf_token", "POST");
     if(!$this->logined || !$this->checkCsrfToken($form_token)) {
       $this->set_notice("ログインしていません");
-      header("Location: index.php");
+      header("Location: " . $this->get_full_url());
       return;
     }
 
@@ -196,7 +196,7 @@ class App {
     $message = $this->getParam("message", "POST") ?? "";
     if(!checkdate($month, $day, $year)) {
       $this->set_notice("日付が異常です");
-      header("Location: index.php");
+      header("Location: " . $this->get_full_url());
       return;
     }
 
@@ -209,7 +209,7 @@ class App {
         ":message" => $message
       ]);
 
-    header("Location: index.php?year={$year}&month={$month}");
+    header("Location: " . $this->get_full_url(["year" => $year, "month" => $month]));
   }
 
   /**
@@ -225,7 +225,7 @@ class App {
     else {
       $this->set_notice("ログインに失敗しました");
     }
-    header("Location: index.php");
+    header("Location: " . $this->get_full_url());
   }
 
   /**
@@ -235,7 +235,7 @@ class App {
   {
     $_SESSION['logined'] = FALSE;
     $this->set_notice("ログアウトしました");
-    header("Location: index.php");
+    header("Location: " . $this->get_full_url());
   }
 
   /**
@@ -296,6 +296,24 @@ class App {
         $param = NULL;
     }
     return($param);
+  }
+
+  /**
+   * フルURL生成
+   *
+   * @param ?array $queries クエリ
+   * @return string フルURL
+   */
+  private function get_full_url(?array $queries = NULL) : string
+  {
+    $full_url = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === 'off') ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
+    if(!empty($queries)) {
+      $full_url .= "?" . implode("&", array_map(function($key, $value) {
+        return(urlencode($key) . "=" . urlencode($value));
+      }, array_keys($queries), array_values($queries)));
+    }
+
+    return($full_url);
   }
 
   /**
