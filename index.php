@@ -97,7 +97,8 @@ class App {
       "year" => $year,
       "month" => $month,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -134,7 +135,8 @@ class App {
       "keyword" => $keyword,
       "searchLimited" => $searchLimited,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -170,7 +172,8 @@ class App {
     $this->view->displayEdit([
       "title" => $this->config["title"],
       "article" => $article,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -459,7 +462,11 @@ class View {
         HTML;
     }
 
-    $this->output(["title" => $viewData["title"], "contents" => $contents]);
+    $this->output([
+      "title" => $viewData["title"],
+      "notice" => $this->h($viewData["notice"] ?? ""),
+      "contents" => $contents
+    ]);
   }
 
   /**
@@ -489,7 +496,11 @@ class View {
         <input type="submit" value="更新">
       </form>
       HTML;
-    $this->output(["title" => $viewData["title"], "contents" => $contents]);
+    $this->output([
+      "title" => $viewData["title"],
+      "notice" => $this->h($viewData["notice"] ?? ""),
+      "contents" => $contents
+    ]);
   }
 
   /**
@@ -514,6 +525,9 @@ class View {
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
             </header>
+            <div id="notice">
+              {$viewData["notice"]}
+            </div>
             <div id="contents">
               {$viewData["contents"]}
             </div>
