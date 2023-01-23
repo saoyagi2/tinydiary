@@ -288,6 +288,28 @@ class App {
   }
 
   /**
+   * お知らせ取得
+   *
+   * @return ?string お知らせ
+   */
+  private function get_notice() : ?string
+  {
+    $message = $_SESSION["notice"];
+    unset($_SESSION["notice"]);
+    return($message);
+  }
+
+  /**
+   * お知らせセット
+   *
+   * @param string message お知らせ
+   */
+  private function set_notice(string $message) : void
+  {
+    $_SESSION["notice"] = $message;
+  }
+
+  /**
    * CSRF対策トークン生成
    *
    * @return $string CSRF対策トークン
