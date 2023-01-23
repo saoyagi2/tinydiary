@@ -53,10 +53,10 @@ class App {
     if($postMode === "login") {
       $this->login();
     }
-    if($getMode === "logout") {
+    elseif($getMode === "logout") {
       $this->logout();
     }
-    if($postMode === "update") {
+    elseif($postMode === "update") {
       $this->update();
     }
     elseif($getMode === "edit") {
