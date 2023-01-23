@@ -146,6 +146,7 @@ class App {
   private function edit() : void
   {
     if(!$this->logined) {
+      $this->set_notice("ログインしていません");
       header("Location: index.php");
       return;
     }
@@ -184,6 +185,7 @@ class App {
   {
     $form_token = $this->getParam("csrf_token", "POST");
     if(!$this->logined || !$this->checkCsrfToken($form_token)) {
+      $this->set_notice("ログインしていません");
       header("Location: index.php");
       return;
     }
@@ -193,6 +195,7 @@ class App {
     $day = (int)($this->getParam("day", "POST") ?? 0);
     $message = $this->getParam("message", "POST") ?? "";
     if(!checkdate($month, $day, $year)) {
+      $this->set_notice("日付が異常です");
       header("Location: index.php");
       return;
     }
@@ -217,6 +220,10 @@ class App {
     $form_token = $this->getParam("csrf_token", "POST");
     if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
       $_SESSION['logined'] = TRUE;
+      $this->set_notice("ログインしました");
+    }
+    else {
+      $this->set_notice("ログインに失敗しました");
     }
     header("Location: index.php");
   }
@@ -227,6 +234,7 @@ class App {
   private function logout() : void
   {
     $_SESSION['logined'] = FALSE;
+    $this->set_notice("ログアウトしました");
     header("Location: index.php");
   }
 
