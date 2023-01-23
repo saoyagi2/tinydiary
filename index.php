@@ -97,7 +97,8 @@ class App {
       "year" => $year,
       "month" => $month,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -134,7 +135,8 @@ class App {
       "keyword" => $keyword,
       "searchLimited" => $searchLimited,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -144,6 +146,7 @@ class App {
   private function edit() : void
   {
     if(!$this->logined) {
+      $this->set_notice("ログインしていません");
       header("Location: index.php");
       return;
     }
@@ -170,7 +173,8 @@ class App {
     $this->view->displayEdit([
       "title" => $this->config["title"],
       "article" => $article,
-      'csrf_token' => $this->getCsrfToken()
+      'csrf_token' => $this->getCsrfToken(),
+      "notice" => $this->get_notice(),
     ]);
   }
 
@@ -181,6 +185,7 @@ class App {
   {
     $form_token = $this->getParam("csrf_token", "POST");
     if(!$this->logined || !$this->checkCsrfToken($form_token)) {
+      $this->set_notice("ログインしていません");
       header("Location: index.php");
       return;
     }
@@ -190,6 +195,7 @@ class App {
     $day = (int)($this->getParam("day", "POST") ?? 0);
     $message = $this->getParam("message", "POST") ?? "";
     if(!checkdate($month, $day, $year)) {
+      $this->set_notice("日付が異常です");
       header("Location: index.php");
       return;
     }
@@ -214,6 +220,10 @@ class App {
     $form_token = $this->getParam("csrf_token", "POST");
     if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
       $_SESSION['logined'] = TRUE;
+      $this->set_notice("ログインしました");
+    }
+    else {
+      $this->set_notice("ログインに失敗しました");
     }
     header("Location: index.php");
   }
@@ -224,6 +234,7 @@ class App {
   private function logout() : void
   {
     $_SESSION['logined'] = FALSE;
+    $this->set_notice("ログアウトしました");
     header("Location: index.php");
   }
 
@@ -285,6 +296,28 @@ class App {
         $param = NULL;
     }
     return($param);
+  }
+
+  /**
+   * お知らせ取得
+   *
+   * @return ?string お知らせ
+   */
+  private function get_notice() : ?string
+  {
+    $message = $_SESSION["notice"];
+    unset($_SESSION["notice"]);
+    return($message);
+  }
+
+  /**
+   * お知らせセット
+   *
+   * @param string message お知らせ
+   */
+  private function set_notice(string $message) : void
+  {
+    $_SESSION["notice"] = $message;
   }
 
   /**
@@ -437,7 +470,11 @@ class View {
         HTML;
     }
 
-    $this->output(["title" => $viewData["title"], "contents" => $contents]);
+    $this->output([
+      "title" => $viewData["title"],
+      "notice" => $this->h($viewData["notice"] ?? ""),
+      "contents" => $contents
+    ]);
   }
 
   /**
@@ -467,7 +504,11 @@ class View {
         <input type="submit" value="更新">
       </form>
       HTML;
-    $this->output(["title" => $viewData["title"], "contents" => $contents]);
+    $this->output([
+      "title" => $viewData["title"],
+      "notice" => $this->h($viewData["notice"] ?? ""),
+      "contents" => $contents
+    ]);
   }
 
   /**
@@ -492,6 +533,9 @@ class View {
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
             </header>
+            <div id="notice">
+              {$viewData["notice"]}
+            </div>
             <div id="contents">
               {$viewData["contents"]}
             </div>
