@@ -40,7 +40,7 @@ class App {
     $this->view = new View();
 
     session_start();
-    $this->logined = $_SESSION['logined'] ?? FALSE;
+    $this->logined = $_SESSION["logined"] ?? FALSE;
   }
 
   /**
@@ -97,7 +97,7 @@ class App {
       "year" => $year,
       "month" => $month,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken(),
+      "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
     ]);
   }
@@ -116,7 +116,7 @@ class App {
         continue;
       }
       $wheres[] = "message LIKE ?";
-      $params[] = "%" . preg_replace('/(?=[!_%])/', '!', $fragment) . "%";
+      $params[] = "%" . preg_replace("/(?=[!_%])/", "!", $fragment) . "%";
     }
     if(!empty($wheres)) {
       $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
@@ -135,7 +135,7 @@ class App {
       "keyword" => $keyword,
       "searchLimited" => $searchLimited,
       "logined" => $this->logined,
-      'csrf_token' => $this->getCsrfToken(),
+      "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
     ]);
   }
@@ -173,7 +173,7 @@ class App {
     $this->view->displayEdit([
       "title" => $this->config["title"],
       "article" => $article,
-      'csrf_token' => $this->getCsrfToken(),
+      "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
     ]);
   }
@@ -218,8 +218,8 @@ class App {
   private function login() : void
   {
     $form_token = $this->getParam("csrf_token", "POST");
-    if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config['password'])) {
-      $_SESSION['logined'] = TRUE;
+    if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
+      $_SESSION["logined"] = TRUE;
       $this->set_notice("ログインしました");
     }
     else {
@@ -233,7 +233,7 @@ class App {
    */
   private function logout() : void
   {
-    $_SESSION['logined'] = FALSE;
+    $_SESSION["logined"] = FALSE;
     $this->set_notice("ログアウトしました");
     header("Location: " . $this->get_full_url());
   }
@@ -286,10 +286,10 @@ class App {
   private function getParam(string $key, string $method) : ?string
   {
     switch($method) {
-      case 'GET':
+      case "GET":
         $param = $_GET[$key] ?? NULL;
         break;
-      case 'POST':
+      case "POST":
         $param = $_POST[$key] ?? NULL;
         break;
       default:
@@ -306,7 +306,7 @@ class App {
    */
   private function get_full_url(?array $queries = NULL) : string
   {
-    $full_url = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === 'off') ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
+    $full_url = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
     if(!empty($queries)) {
       $full_url .= "?" . implode("&", array_map(function($key, $value) {
         return(urlencode($key) . "=" . urlencode($value));
