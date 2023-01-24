@@ -7,8 +7,13 @@ use Database;
 use PDO;
 
 {
-  $app = new App($config);
-  $app->run();
+  try {
+    $app = new App($config);
+    $app->run();
+  }
+  catch(Exception $e) {
+    print $e->getMessage();
+  }
   exit();
 }
 
@@ -602,17 +607,12 @@ class Database {
    * コンストラクタ
    *
    * @param string $dbPath データベースファイルへのパス
+   * @throws PDOException DB初期化失敗
    */
   public function __construct(string $dbPath)
   {
-    try {
-      $this->connectDatabase($dbPath);
-      $this->createSchema();
-    }
-    catch(PDOException $e) {
-      print $e->getMessage();
-      exit();
-    }
+    $this->connectDatabase($dbPath);
+    $this->createSchema();
   }
 
   /**
