@@ -523,7 +523,7 @@ class View {
     $csrf_token = $this->h($viewData["csrf_token"]);
 
     $contents = <<<HTML
-      <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
+      <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
       <div class="form">
         <form action="index.php" method="POST">
           <input type="hidden" name="mode" value="update">
