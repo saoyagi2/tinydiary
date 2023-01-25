@@ -116,7 +116,7 @@ class App {
 
     $wheres = [];
     $params = [];
-    foreach(explode(" ", $keyword) as $fragment) {
+    foreach(preg_split("/[　\s]/", $keyword) as $fragment) {
       if(empty($fragment)) {
         continue;
       }
