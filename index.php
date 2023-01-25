@@ -105,6 +105,7 @@ class App {
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
       "css" => $this->config["css"],
+      "favicon" => $this->config["favicon"],
     ]);
   }
 
@@ -145,6 +146,7 @@ class App {
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
       "css" => $this->config["css"],
+      "favicon" => $this->config["favicon"],
     ]);
   }
 
@@ -184,6 +186,7 @@ class App {
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
       "css" => $this->config["css"],
+      "favicon" => $this->config["favicon"],
     ]);
   }
 
@@ -503,6 +506,7 @@ class View {
       "notice" => $this->h($viewData["notice"] ?? ""),
       "contents" => $contents,
       "css" => $viewData["css"],
+      "favicon" => $viewData["favicon"],
     ]);
   }
 
@@ -539,6 +543,7 @@ class View {
       "notice" => $this->h($viewData["notice"] ?? ""),
       "contents" => $contents,
       "css" => $viewData["css"],
+      "favicon" => $viewData["favicon"],
     ]);
   }
 
@@ -551,6 +556,15 @@ class View {
   {
     $title = $this->h($outputData["title"]);
     $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
+    if(!empty($outputData["favicon"])) {
+      $favicon = urlencode($outputData["favicon"]);
+      $favicon_html = <<<HTML
+        <link rel="icon" href="{$favicon}" sizes="any">
+        HTML;
+    }
+    else {
+      $favicon_html = "";
+    }
     if(!empty($outputData["notice"])) {
       $notice = $outputData["notice"];
       $notice_html = <<<HTML
@@ -569,6 +583,7 @@ class View {
         <head>
           <title>{$title}</title>
           <link rel="stylesheet" href="{$css}" type="text/css" title="base">
+          {$favicon_html}
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>

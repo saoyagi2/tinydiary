@@ -13,4 +13,7 @@ $config = [
   // カスタムCSS
   // 未指定の場合は default.css が使用されます
   "css" => "",
+
+  // favicon
+  "favicon" => "",
 ];
