@@ -251,7 +251,7 @@ class App {
    * @param int $month 月
    * @return arrray $articles 補完済日記データ
    */
-  private function interpolateArticles($articles, $year, $month) : array
+  private function interpolateArticles(array $articles, int $year, int $month) : array
   {
     $thisYear = (int)date("Y");
     $thisMonth = (int)date("m");
@@ -539,7 +539,7 @@ class View {
    *
    * @param array $outputData 出力データ
    */
-  private function output($outputData) : void
+  private function output(array $outputData) : void
   {
     $title = $this->h($outputData["title"]);
 
