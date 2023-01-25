@@ -127,19 +127,19 @@ class App {
     if(!empty($wheres)) {
       $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
       $articles = $this->database->query($sql, $params);
-      $searchLimited = count($articles) > App::SEARCH_LIMIT;
-      $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
+      if(count($articles) > App::SEARCH_LIMIT) {
+        $this->set_notice("制限以上ヒットしたため検索結果を一部省略しました");
+        $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
+      }
     }
     else {
       $articles = [];
-      $searchLimited = false;
     }
 
     $this->view->displayShow([
       "title" => $this->config["title"],
       "articles" => $articles,
       "keyword" => $keyword,
-      "searchLimited" => $searchLimited,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
@@ -387,7 +387,6 @@ class View {
     $year = (int)($viewData["year"] ?? 0);
     $month = (int)($viewData["month"] ?? 0);
     $keyword = $viewData["keyword"] ?? "";
-    $searchLimited = $viewData["searchLimited"] ?? false;
     $logined = $viewData["logined"] ?? false;
 
     $contents = "";
@@ -475,9 +474,6 @@ class View {
           </div>
         </div>
         HTML;
-    }
-    if($searchLimited) {
-      $contents .= "<p>制限以上ヒットしたため省略しました</p>";
     }
 
     if($logined) {
