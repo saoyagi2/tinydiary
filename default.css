@@ -1,0 +1,42 @@
+#header {
+  border-bottom: 3px solid gray;
+}
+#footer {
+  border-top: 3px solid gray;
+}
+#container {
+  margin: 10px;
+}
+#notice {
+  padding: 3px;
+  background-color: silver;
+}
+#navi {
+}
+#navi ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+#navi li {
+  list-style: none;
+  margin-right: 10px;
+}
+
+.article {
+}
+.form {
+}
+.form textarea {
+  width: 100%;
+  height: 20em;
+  box-sizing: border-box;
+}
+.yearmonth {
+}
+.date {
+}
+.message {
+}
+.links {
+}

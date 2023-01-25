@@ -104,6 +104,7 @@ class App {
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -142,6 +143,7 @@ class App {
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -180,6 +182,7 @@ class App {
       "article" => $article,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -390,13 +393,15 @@ class View {
     $contents = "";
 
     $contents .= <<<HTML
-      <form action="index.php?mode=view" method="GET">
-        <input type="hidden" name="mode" value="search">
-        <label>検索:
-          <input type="text" name="keyword" value="{$keyword}">
-        </label>
-        <input type="submit" value="検索">
-      </form>
+      <div class="form">
+        <form action="index.php?mode=view" method="GET">
+          <input type="hidden" name="mode" value="search">
+          <label>検索:
+            <input type="text" name="keyword" value="{$keyword}">
+          </label>
+          <input type="submit" value="検索">
+        </form>
+      </div>
       HTML;
 
     if(checkdate($month, 1, $year)) { // 年月表示モードなら前月・翌月ナビ表示
@@ -404,7 +409,7 @@ class View {
       $thisMonth = (int)date("m");
 
       $contents .= <<<HTML
-        <div class="navi">
+        <div id="navi">
           <ul>
         HTML;
       $prevYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
@@ -454,14 +459,15 @@ class View {
         <div class="article" id="d{$date}">
           <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
         HTML;
-        if($logined) {
-          $contents .= <<<HTML
-            <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
-            HTML;
-        }
+      if($logined) {
         $contents .= <<<HTML
-          <div class="message">
-        HTML;
+          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+          HTML;
+      }
+      $contents .= <<<HTML
+        <div class="message">
+      HTML;
+
       foreach(preg_split("/\R/", $article["message"]) as $fragment) {
         $contents .= "<p>" . $this->h($fragment) . "</p>";
       }
@@ -482,21 +488,24 @@ class View {
     else {
       $csrf_token = $this->h($viewData["csrf_token"]);
       $contents .= <<<HTML
-        <form action="index.php" method="POST">
-          <input type="hidden" name="mode" value="login">
-          <input type="hidden" name="csrf_token" value="{$csrf_token}">
-          <label>パスワード:
-            <input type="password" name="password">
-          </label>
-          <input type="submit" value="ログイン">
-        </form>
+        <div class="form">
+          <form action="index.php" method="POST">
+            <input type="hidden" name="mode" value="login">
+            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+            <label>パスワード:
+              <input type="password" name="password">
+            </label>
+            <input type="submit" value="ログイン">
+          </form>
+        </div>
         HTML;
     }
 
     $this->output([
       "title" => $viewData["title"],
       "notice" => $this->h($viewData["notice"] ?? ""),
-      "contents" => $contents
+      "contents" => $contents,
+      "css" => $viewData["css"],
     ]);
   }
 
@@ -515,22 +524,24 @@ class View {
     $csrf_token = $this->h($viewData["csrf_token"]);
 
     $contents = <<<HTML
-      <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
-      <div class="message">
-      <form action="index.php" method="POST">
-        <input type="hidden" name="mode" value="update">
-        <input type="hidden" name="csrf_token" value="{$csrf_token}">
-        <input type="hidden" name="year" value="${year}">
-        <input type="hidden" name="month" value="${month}">
-        <input type="hidden" name="day" value="${day}">
-        <textarea name="message">{$message}</textarea>
-        <input type="submit" value="更新">
-      </form>
+      <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
+      <div class="form">
+        <form action="index.php" method="POST">
+          <input type="hidden" name="mode" value="update">
+          <input type="hidden" name="csrf_token" value="{$csrf_token}">
+          <input type="hidden" name="year" value="${year}">
+          <input type="hidden" name="month" value="${month}">
+          <input type="hidden" name="day" value="${day}">
+          <textarea name="message">{$message}</textarea>
+          <input type="submit" value="更新">
+        </form>
+      </div>
       HTML;
     $this->output([
       "title" => $viewData["title"],
       "notice" => $this->h($viewData["notice"] ?? ""),
-      "contents" => $contents
+      "contents" => $contents,
+      "css" => $viewData["css"],
     ]);
   }
 
@@ -542,13 +553,25 @@ class View {
   private function output(array $outputData) : void
   {
     $title = $this->h($outputData["title"]);
+    $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
+    if(!empty($outputData["notice"])) {
+      $notice = $outputData["notice"];
+      $notice_html = <<<HTML
+        <div id="notice">
+          {$notice}
+        </div>
+        HTML;
+    }
+    else {
+      $notice_html = "";
+    }
 
     print <<<HTML
       <!DOCTYPE html>
       <html lang="ja">
         <head>
           <title>{$title}</title>
-          <link rel="stylesheet" href="style.css" type="text/css" title="base">
+          <link rel="stylesheet" href="{$css}" type="text/css" title="base">
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>
@@ -556,9 +579,7 @@ class View {
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
             </header>
-            <div id="notice">
-              {$outputData["notice"]}
-            </div>
+            {$notice_html}
             <div id="contents">
               {$outputData["contents"]}
             </div>
