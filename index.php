@@ -459,14 +459,15 @@ class View {
         <div class="article" id="d{$date}">
           <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
         HTML;
-        if($logined) {
-          $contents .= <<<HTML
-            <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
-            HTML;
-        }
+      if($logined) {
         $contents .= <<<HTML
-          <div class="message">
-        HTML;
+          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+          HTML;
+      }
+      $contents .= <<<HTML
+        <div class="message">
+      HTML;
+
       foreach(preg_split("/\R/", $article["message"]) as $fragment) {
         $contents .= "<p>" . $this->h($fragment) . "</p>";
       }
