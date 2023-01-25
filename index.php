@@ -393,13 +393,15 @@ class View {
     $contents = "";
 
     $contents .= <<<HTML
-      <form action="index.php?mode=view" method="GET">
-        <input type="hidden" name="mode" value="search">
-        <label>検索:
-          <input type="text" name="keyword" value="{$keyword}">
-        </label>
-        <input type="submit" value="検索">
-      </form>
+      <div class="form">
+        <form action="index.php?mode=view" method="GET">
+          <input type="hidden" name="mode" value="search">
+          <label>検索:
+            <input type="text" name="keyword" value="{$keyword}">
+          </label>
+          <input type="submit" value="検索">
+        </form>
+      </div>
       HTML;
 
     if(checkdate($month, 1, $year)) { // 年月表示モードなら前月・翌月ナビ表示
@@ -485,14 +487,16 @@ class View {
     else {
       $csrf_token = $this->h($viewData["csrf_token"]);
       $contents .= <<<HTML
-        <form action="index.php" method="POST">
-          <input type="hidden" name="mode" value="login">
-          <input type="hidden" name="csrf_token" value="{$csrf_token}">
-          <label>パスワード:
-            <input type="password" name="password">
-          </label>
-          <input type="submit" value="ログイン">
-        </form>
+        <div class="form">
+          <form action="index.php" method="POST">
+            <input type="hidden" name="mode" value="login">
+            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+            <label>パスワード:
+              <input type="password" name="password">
+            </label>
+            <input type="submit" value="ログイン">
+          </form>
+        </div>
         HTML;
     }
 
@@ -520,16 +524,17 @@ class View {
 
     $contents = <<<HTML
       <div class="date">{$year}年{$month}月{$day}日({$weekday})</div>
-      <div class="message">
-      <form action="index.php" method="POST">
-        <input type="hidden" name="mode" value="update">
-        <input type="hidden" name="csrf_token" value="{$csrf_token}">
-        <input type="hidden" name="year" value="${year}">
-        <input type="hidden" name="month" value="${month}">
-        <input type="hidden" name="day" value="${day}">
-        <textarea name="message">{$message}</textarea>
-        <input type="submit" value="更新">
-      </form>
+      <div class="form">
+        <form action="index.php" method="POST">
+          <input type="hidden" name="mode" value="update">
+          <input type="hidden" name="csrf_token" value="{$csrf_token}">
+          <input type="hidden" name="year" value="${year}">
+          <input type="hidden" name="month" value="${month}">
+          <input type="hidden" name="day" value="${day}">
+          <textarea name="message">{$message}</textarea>
+          <input type="submit" value="更新">
+        </form>
+      </div>
       HTML;
     $this->output([
       "title" => $viewData["title"],
