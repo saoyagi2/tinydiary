@@ -133,6 +133,7 @@ class App {
       }
     }
     else {
+      $this->set_notice("検索語がありません");
       $articles = [];
     }
 
