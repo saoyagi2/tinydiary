@@ -537,11 +537,11 @@ class View {
   /**
    * 出力
    *
-   * @param array $viewData 表示データ
+   * @param array $outputData 出力データ
    */
-  private function output($viewData) : void
+  private function output($outputData) : void
   {
-    $title = $this->h($viewData["title"]);
+    $title = $this->h($outputData["title"]);
 
     print <<<HTML
       <!DOCTYPE html>
@@ -557,10 +557,10 @@ class View {
               <h1><a href="index.php">{$title}</a></h1>
             </header>
             <div id="notice">
-              {$viewData["notice"]}
+              {$outputData["notice"]}
             </div>
             <div id="contents">
-              {$viewData["contents"]}
+              {$outputData["contents"]}
             </div>
             <footer id="footer">
             </footer>
