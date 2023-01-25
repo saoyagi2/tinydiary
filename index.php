@@ -409,7 +409,7 @@ class View {
       $thisMonth = (int)date("m");
 
       $contents .= <<<HTML
-        <div class="navi">
+        <div id="navi">
           <ul>
         HTML;
       $prevYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
