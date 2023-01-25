@@ -554,6 +554,17 @@ class View {
   {
     $title = $this->h($outputData["title"]);
     $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
+    if(!empty($outputData["notice"])) {
+      $notice = $outputData["notice"];
+      $notice_html = <<<HTML
+        <div id="notice">
+          {$notice}
+        </div>
+        HTML;
+    }
+    else {
+      $notice_html = "";
+    }
 
     print <<<HTML
       <!DOCTYPE html>
@@ -568,9 +579,7 @@ class View {
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
             </header>
-            <div id="notice">
-              {$outputData["notice"]}
-            </div>
+            {$notice_html}
             <div id="contents">
               {$outputData["contents"]}
             </div>
