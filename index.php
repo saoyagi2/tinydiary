@@ -104,6 +104,7 @@ class App {
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -142,6 +143,7 @@ class App {
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -180,6 +182,7 @@ class App {
       "article" => $article,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->get_notice(),
+      "css" => $this->config["css"],
     ]);
   }
 
@@ -496,7 +499,8 @@ class View {
     $this->output([
       "title" => $viewData["title"],
       "notice" => $this->h($viewData["notice"] ?? ""),
-      "contents" => $contents
+      "contents" => $contents,
+      "css" => $viewData["css"],
     ]);
   }
 
@@ -530,7 +534,8 @@ class View {
     $this->output([
       "title" => $viewData["title"],
       "notice" => $this->h($viewData["notice"] ?? ""),
-      "contents" => $contents
+      "contents" => $contents,
+      "css" => $viewData["css"],
     ]);
   }
 
@@ -542,13 +547,14 @@ class View {
   private function output(array $outputData) : void
   {
     $title = $this->h($outputData["title"]);
+    $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
 
     print <<<HTML
       <!DOCTYPE html>
       <html lang="ja">
         <head>
           <title>{$title}</title>
-          <link rel="stylesheet" href="style.css" type="text/css" title="base">
+          <link rel="stylesheet" href="{$css}" type="text/css" title="base">
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>
