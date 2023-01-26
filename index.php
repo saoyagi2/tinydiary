@@ -330,19 +330,19 @@ class App {
    */
   private function get_notice() : ?string
   {
-    $message = $_SESSION["notice"];
+    $notice = $_SESSION["notice"] ?? "";
     unset($_SESSION["notice"]);
-    return($message);
+    return($notice);
   }
 
   /**
    * お知らせセット
    *
-   * @param string message お知らせ
+   * @param string notice お知らせ
    */
-  private function set_notice(string $message) : void
+  private function set_notice(string $notice) : void
   {
-    $_SESSION["notice"] = $message;
+    $_SESSION["notice"] = $notice;
   }
 
   /**
