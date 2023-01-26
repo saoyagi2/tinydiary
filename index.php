@@ -1,11 +1,6 @@
 <?php
 require "config.php";
 
-use App;
-use View;
-use Database;
-use PDO;
-
 {
   try {
     $app = new App($config);
