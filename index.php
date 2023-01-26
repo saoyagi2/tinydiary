@@ -98,7 +98,7 @@ class App {
       "month" => $month,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
-      "notice" => $this->get_notice(),
+      "notice" => $this->getNotice(),
       "css" => $this->config["css"],
       "favicon" => $this->config["favicon"],
     ]);
@@ -124,12 +124,12 @@ class App {
       $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
       $articles = $this->database->query($sql, $params);
       if(count($articles) > App::SEARCH_LIMIT) {
-        $this->set_notice("制限以上ヒットしたため検索結果を一部省略しました");
+        $this->setNotice("制限以上ヒットしたため検索結果を一部省略しました");
         $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
       }
     }
     else {
-      $this->set_notice("検索語がありません");
+      $this->setNotice("検索語がありません");
       $articles = [];
     }
 
@@ -139,7 +139,7 @@ class App {
       "keyword" => $keyword,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
-      "notice" => $this->get_notice(),
+      "notice" => $this->getNotice(),
       "css" => $this->config["css"],
       "favicon" => $this->config["favicon"],
     ]);
@@ -151,8 +151,8 @@ class App {
   private function edit() : void
   {
     if(!$this->logined) {
-      $this->set_notice("ログインしていません");
-      header("Location: " . $this->get_full_url());
+      $this->setNotice("ログインしていません");
+      header("Location: " . $this->getFullUrl());
       return;
     }
 
@@ -179,7 +179,7 @@ class App {
       "title" => $this->config["title"],
       "article" => $article,
       "csrf_token" => $this->getCsrfToken(),
-      "notice" => $this->get_notice(),
+      "notice" => $this->getNotice(),
       "css" => $this->config["css"],
       "favicon" => $this->config["favicon"],
     ]);
@@ -190,10 +190,15 @@ class App {
    */
   private function update() : void
   {
-    $form_token = $this->getParam("csrf_token", "POST");
-    if(!$this->logined || !$this->checkCsrfToken($form_token)) {
-      $this->set_notice("ログインしていません");
-      header("Location: " . $this->get_full_url());
+    $formToken = $this->getParam("csrf_token", "POST");
+    if(!$this->logined) {
+      $this->setNotice("ログインしていません");
+      header("Location: " . $this->getFullUrl());
+      return;
+    }
+    if(!$this->checkCsrfToken($formToken)) {
+      $this->setNotice("不正な操作です");
+      header("Location: " . $this->getFullUrl());
       return;
     }
 
@@ -202,8 +207,8 @@ class App {
     $day = (int)($this->getParam("day", "POST") ?? 0);
     $message = $this->getParam("message", "POST") ?? "";
     if(!checkdate($month, $day, $year)) {
-      $this->set_notice("日付が異常です");
-      header("Location: " . $this->get_full_url());
+      $this->setNotice("日付が異常です");
+      header("Location: " . $this->getFullUrl());
       return;
     }
 
@@ -216,7 +221,7 @@ class App {
         ":message" => $message
       ]);
 
-    header("Location: " . $this->get_full_url(["year" => $year, "month" => $month]));
+    header("Location: " . $this->getFullUrl(["year" => $year, "month" => $month]));
   }
 
   /**
@@ -224,15 +229,15 @@ class App {
    */
   private function login() : void
   {
-    $form_token = $this->getParam("csrf_token", "POST");
-    if($this->checkCsrfToken($form_token) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
+    $formToken = $this->getParam("csrf_token", "POST");
+    if($this->checkCsrfToken($formToken) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
       $_SESSION["logined"] = TRUE;
-      $this->set_notice("ログインしました");
+      $this->setNotice("ログインしました");
     }
     else {
-      $this->set_notice("ログインに失敗しました");
+      $this->setNotice("ログインに失敗しました");
     }
-    header("Location: " . $this->get_full_url());
+    header("Location: " . $this->getFullUrl());
   }
 
   /**
@@ -241,8 +246,8 @@ class App {
   private function logout() : void
   {
     $_SESSION["logined"] = FALSE;
-    $this->set_notice("ログアウトしました");
-    header("Location: " . $this->get_full_url());
+    $this->setNotice("ログアウトしました");
+    header("Location: " . $this->getFullUrl());
   }
 
   /**
@@ -311,16 +316,16 @@ class App {
    * @param ?array $queries クエリ
    * @return string フルURL
    */
-  private function get_full_url(?array $queries = NULL) : string
+  private function getFullUrl(?array $queries = NULL) : string
   {
-    $full_url = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
+    $fullUrl = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
     if(!empty($queries)) {
-      $full_url .= "?" . implode("&", array_map(function($key, $value) {
+      $fullUrl .= "?" . implode("&", array_map(function($key, $value) {
         return(urlencode($key) . "=" . urlencode($value));
       }, array_keys($queries), array_values($queries)));
     }
 
-    return($full_url);
+    return($fullUrl);
   }
 
   /**
@@ -328,7 +333,7 @@ class App {
    *
    * @return ?string お知らせ
    */
-  private function get_notice() : ?string
+  private function getNotice() : ?string
   {
     $notice = $_SESSION["notice"] ?? "";
     unset($_SESSION["notice"]);
@@ -340,7 +345,7 @@ class App {
    *
    * @param string notice お知らせ
    */
-  private function set_notice(string $notice) : void
+  private function setNotice(string $notice) : void
   {
     $_SESSION["notice"] = $notice;
   }
@@ -360,15 +365,14 @@ class App {
   /**
    * CSRF対策トークン照合
    *
-   * @param string form_token FORMから渡されたCSRF対策トークン
+   * @param string formToken FORMから渡されたCSRF対策トークン
    * @retrun bool 照合結果(trueなら正常、falseなら不正)
    */
-  private function checkCsrfToken(string $form_token) : bool
+  private function checkCsrfToken(string $formToken) : bool
   {
-    $csrf_token = $_SESSION["csrf_token"];
+    $csrfToken = $_SESSION["csrf_token"];
     unset($_SESSION["csrf_token"]);
-    $result = hash_equals($csrf_token, $form_token);
-    return(hash_equals($csrf_token, $form_token));
+    return(hash_equals($csrfToken, $formToken));
   }
 }
 
@@ -481,12 +485,12 @@ class View {
         HTML;
     }
     else {
-      $csrf_token = $this->h($viewData["csrf_token"]);
+      $csrfToken = $this->h($viewData["csrf_token"]);
       $contents .= <<<HTML
         <div class="form">
           <form action="index.php" method="POST">
             <input type="hidden" name="mode" value="login">
-            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+            <input type="hidden" name="csrf_token" value="{$csrfToken}">
             <label>パスワード:
               <input type="password" name="password">
             </label>
@@ -517,14 +521,14 @@ class View {
     $day = (int)$viewData["article"]["day"];
     $weekday = $this->weekday($year, $month, $day);
     $message = $this->h($viewData["article"]["message"]);
-    $csrf_token = $this->h($viewData["csrf_token"]);
+    $csrfToken = $this->h($viewData["csrf_token"]);
 
     $contents = <<<HTML
       <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
       <div class="form">
         <form action="index.php" method="POST">
           <input type="hidden" name="mode" value="update">
-          <input type="hidden" name="csrf_token" value="{$csrf_token}">
+          <input type="hidden" name="csrf_token" value="{$csrfToken}">
           <input type="hidden" name="year" value="${year}">
           <input type="hidden" name="month" value="${month}">
           <input type="hidden" name="day" value="${day}">
@@ -553,23 +557,23 @@ class View {
     $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
     if(!empty($outputData["favicon"])) {
       $favicon = urlencode($outputData["favicon"]);
-      $favicon_html = <<<HTML
+      $faviconHtml = <<<HTML
         <link rel="icon" href="{$favicon}" sizes="any">
         HTML;
     }
     else {
-      $favicon_html = "";
+      $faviconHtml = "";
     }
     if(!empty($outputData["notice"])) {
       $notice = $outputData["notice"];
-      $notice_html = <<<HTML
+      $noticeHtml = <<<HTML
         <div id="notice">
           {$notice}
         </div>
         HTML;
     }
     else {
-      $notice_html = "";
+      $noticeHtml = "";
     }
 
     print <<<HTML
@@ -578,7 +582,7 @@ class View {
         <head>
           <title>{$title}</title>
           <link rel="stylesheet" href="{$css}" type="text/css" title="base">
-          {$favicon_html}
+          {$faviconHtml}
           <meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body>
@@ -586,7 +590,7 @@ class View {
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
             </header>
-            {$notice_html}
+            {$noticeHtml}
             <div id="contents">
               {$outputData["contents"]}
             </div>
