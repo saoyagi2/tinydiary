@@ -159,6 +159,12 @@ class App {
     $year = (int)($this->getParam("year", "GET") ?? date("Y"));
     $month = (int)($this->getParam("month", "GET") ?? date("m"));
     $day = (int)($this->getParam("day", "GET") ?? date("d"));
+    if(!checkdate($month, $day, $year)) {
+      $this->setNotice("日付が異常です");
+      header("Location: " . $this->getFullUrl());
+      return;
+    }
+
     $article = $this->database->query(
       "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
       [
