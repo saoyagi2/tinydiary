@@ -476,7 +476,7 @@ class View {
         <div class="message">
       HTML;
 
-      foreach(preg_split("/\R/", $article["message"]) as $fragment) {
+      foreach(preg_split("/\R/u", $article["message"]) as $fragment) {
         $contents .= "<p>" . $this->h($fragment) . "</p>";
       }
       $contents .= <<<HTML
