@@ -113,7 +113,7 @@ class App {
 
     $wheres = [];
     $params = [];
-    foreach(preg_split("/[　\s]/", $keyword) as $fragment) {
+    foreach(preg_split("/[　\s]/u", $keyword) as $fragment) {
       if(empty($fragment)) {
         continue;
       }
