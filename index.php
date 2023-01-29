@@ -127,6 +127,9 @@ class App {
         $this->setNotice("制限以上ヒットしたため検索結果を一部省略しました");
         $articles = array_slice($articles, 0, App::SEARCH_LIMIT);
       }
+      else {
+        $this->setNotice(sprintf("%d件ヒットしました", count($articles)));
+      }
     }
     else {
       $this->setNotice("検索語がありません");
