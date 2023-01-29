@@ -29,7 +29,7 @@ SQLite に格納されるテーブルは以下の通りです。
 | カラム | 型 | 内容 | 制約、その他 |
 |---|---|---|---|
 | id | INTEGER | プライマリキー | AUTOINCREMENT |
-| year | INTEGER | 年 | NOT NULL |
+| year | INTEGER | 年 | NOT NULL, year/month/dayで複合unique index |
 | month | INTEGER | 月 | NOT NULL |
 | day | INTEGER | 日 | NOT NULL |
 | message | TEXT | 日記本文 | |
