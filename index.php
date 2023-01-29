@@ -85,7 +85,9 @@ class App {
       ];
       $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
       $articles = $this->database->query($sql, $params);
-      $articles = $this->interpolateArticles($articles, $year, $month);
+      if($this->logined) {
+        $articles = $this->interpolateArticles($articles, $year, $month);
+      }
     }
     else {
       $articles = [];
