@@ -11,17 +11,6 @@
   padding: 3px;
   background-color: silver;
 }
-#navi {
-}
-#navi ul {
-  display: flex;
-  margin: 0;
-  padding: 0;
-}
-#navi li {
-  list-style: none;
-  margin-right: 10px;
-}
 
 .article {
 }
@@ -39,4 +28,13 @@
 .message {
 }
 .links {
+}
+.links ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+.links li {
+  list-style: none;
+  margin-right: 10px;
 }
