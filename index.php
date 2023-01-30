@@ -422,7 +422,7 @@ class View {
       $thisMonth = (int)date("m");
 
       $contents .= <<<HTML
-        <div id="navi">
+        <div class="links">
           <ul>
         HTML;
       $prevYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
@@ -474,7 +474,11 @@ class View {
         HTML;
       if($logined) {
         $contents .= <<<HTML
-          <div class="links"><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></div>
+          <div class="links">
+            <ul>
+              <li><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
+            </ul>
+          </div>
           HTML;
       }
       $contents .= <<<HTML
@@ -492,7 +496,11 @@ class View {
 
     if($logined) {
       $contents .= <<<HTML
-        <a href="index.php?mode=logout">ログアウト</a>
+        <div class="links">
+          <ul>
+            <li><a href="index.php?mode=logout">ログアウト</a></li>
+          </ul>
+        </div>
         HTML;
     }
     else {
@@ -591,6 +599,7 @@ class View {
       <!DOCTYPE html>
       <html lang="ja">
         <head>
+          <meta charset="utf-8">
           <title>{$title}</title>
           <link rel="stylesheet" href="{$css}" type="text/css" title="base">
           {$faviconHtml}
