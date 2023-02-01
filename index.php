@@ -39,6 +39,10 @@ class App {
     $this->database = new Database($this->config["db_path"]);
     $this->view = new View();
 
+    if(!empty($config["timezone"])) {
+      date_default_timezone_set($config["timezone"]);
+    }
+
     session_start();
     $this->logined = $_SESSION["logined"] ?? FALSE;
   }
