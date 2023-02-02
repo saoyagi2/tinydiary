@@ -79,13 +79,16 @@ class App {
    */
   private function show() : void
   {
-    if(!is_null($year = $this->getParam("year", "GET"))) {
+    $year = $this->getParam("year", "GET");
+    if(!is_null($year)) {
       $year = (int)$year;
     }
-    if(!is_null($month = $this->getParam("month", "GET"))) {
+    $month = $this->getParam("month", "GET");
+    if(!is_null($month)) {
       $month = (int)$month;
     }
-    if(!is_null($day = $this->getParam("day", "GET"))) {
+    $day = $this->getParam("day", "GET");
+    if(!is_null($day)) {
       $day = (int)$day;
     }
     if(is_null($year) && is_null($month) && is_null($day)) {
