@@ -113,7 +113,7 @@ class App {
       $params["day"] = $day;
     }
     if(!empty($wheres)) {
-      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres);
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year, month, day";
       $articles = $this->database->query($sql, $params);
       if($this->logined && !is_null($year) && !is_null($month) && is_null($day)) {
         $articles = $this->interpolateArticles($articles, $year, $month);
