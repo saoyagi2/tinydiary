@@ -79,22 +79,45 @@ class App {
    */
   private function show() : void
   {
-    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
-    $month = (int)($this->getParam("month", "GET") ?? date("m"));
+    if(!is_null($year = $this->getParam("year", "GET"))) {
+      $year = (int)$year;
+    }
+    if(!is_null($month = $this->getParam("month", "GET"))) {
+      $month = (int)$month;
+    }
+    if(!is_null($day = $this->getParam("day", "GET"))) {
+      $day = (int)$day;
+    }
+    if(is_null($year) && is_null($month) && is_null($day)) {
+      $year = (int)date("Y");
+      $month = (int)date("m");
+    }
 
-    if(checkdate($month, 1, $year)) {
-      $params = [
-        ":year" => $year,
-        ":month" => $month,
-      ];
-      $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
+    if(!checkdate($month ?? 1, $day ?? 1, $year ?? 2000)) { // $month=2, $day=29 を OK とするため$year無視定時は 2000 とする
+      $this->setNotice("日付が異常です");
+      header("Location: " . $this->getFullUrl());
+      return;
+    }
+    $wheres = [];
+    $params = [];
+    if(!empty($year)) {
+      $wheres[] = "year = :year";
+      $params["year"] = $year;
+    }
+    if(!empty($month)) {
+      $wheres[] = "month = :month";
+      $params["month"] = $month;
+    }
+    if(!empty($day)) {
+      $wheres[] = "day = :day";
+      $params["day"] = $day;
+    }
+    if(!empty($wheres)) {
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres);
       $articles = $this->database->query($sql, $params);
-      if($this->logined) {
+      if($this->logined && !is_null($year) && !is_null($month) && is_null($day)) {
         $articles = $this->interpolateArticles($articles, $year, $month);
       }
-    }
-    else {
-      $articles = [];
     }
 
     $this->view->displayShow([
@@ -102,6 +125,7 @@ class App {
       "articles" => $articles,
       "year" => $year,
       "month" => $month,
+      "day" => $day,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
