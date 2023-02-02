@@ -79,22 +79,48 @@ class App {
    */
   private function show() : void
   {
-    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
-    $month = (int)($this->getParam("month", "GET") ?? date("m"));
+    $year = $this->getParam("year", "GET");
+    if(!is_null($year)) {
+      $year = (int)$year;
+    }
+    $month = $this->getParam("month", "GET");
+    if(!is_null($month)) {
+      $month = (int)$month;
+    }
+    $day = $this->getParam("day", "GET");
+    if(!is_null($day)) {
+      $day = (int)$day;
+    }
+    if(is_null($year) && is_null($month) && is_null($day)) {
+      $year = (int)date("Y");
+      $month = (int)date("m");
+    }
 
-    if(checkdate($month, 1, $year)) {
-      $params = [
-        ":year" => $year,
-        ":month" => $month,
-      ];
-      $sql = "SELECT * FROM articles WHERE year = :year AND month = :month";
+    if(!checkdate($month ?? 1, $day ?? 1, $year ?? 2000)) { // $month=2, $day=29 を OK とするため$year無視定時は 2000 とする
+      $this->setNotice("日付が異常です");
+      header("Location: " . $this->getFullUrl());
+      return;
+    }
+    $wheres = [];
+    $params = [];
+    if(!empty($year)) {
+      $wheres[] = "year = :year";
+      $params["year"] = $year;
+    }
+    if(!empty($month)) {
+      $wheres[] = "month = :month";
+      $params["month"] = $month;
+    }
+    if(!empty($day)) {
+      $wheres[] = "day = :day";
+      $params["day"] = $day;
+    }
+    if(!empty($wheres)) {
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year, month, day";
       $articles = $this->database->query($sql, $params);
-      if($this->logined) {
+      if($this->logined && !is_null($year) && !is_null($month) && is_null($day)) {
         $articles = $this->interpolateArticles($articles, $year, $month);
       }
-    }
-    else {
-      $articles = [];
     }
 
     $this->view->displayShow([
@@ -102,6 +128,7 @@ class App {
       "articles" => $articles,
       "year" => $year,
       "month" => $month,
+      "day" => $day,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -404,6 +431,7 @@ class View {
   {
     $year = (int)($viewData["year"] ?? 0);
     $month = (int)($viewData["month"] ?? 0);
+    $day = (int)($viewData["day"] ?? 0);
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
 
@@ -421,31 +449,62 @@ class View {
       </div>
       HTML;
 
-    if(checkdate($month, 1, $year)) { // 年月表示モードなら前月・翌月ナビ表示
-      $thisYear = (int)date("Y");
-      $thisMonth = (int)date("m");
-
+    $links = [];
+    $thisYear = (int)date("Y");
+    $thisMonth = (int)date("n");
+    $thisDay = (int)date("j");
+    if($year !== 0 && $month !== 0 && $day !== 0) { // 年月日表示モードなら前日・今月・翌日ナビ表示
+      $date = sprintf("%04d-%02d-%02d", $year, $month, $day);
+      $prevYear = (int)(date("Y", strtotime("{$date} -1 day")));
+      $prevMonth = (int)(date("n", strtotime("{$date} -1 day")));
+      $prevDay = (int)(date("j", strtotime("{$date} -1 day")));
+      if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth < $thisMonth) || ($prevYear === $thisYear && $prevMonth === $thisMonth && $prevDay <= $thisDay)) {
+        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
+      }
+      if($year <= $thisYear) {
+        $links[] = "<a href=\"index.php?year={$year}&amp;month={$month}\">今月</a>";
+      }
+      $nextYear = (int)(date("Y", strtotime("{$date} +1 day")));
+      $nextMonth = (int)(date("n", strtotime("{$date} +1 day")));
+      $nextDay = (int)(date("j", strtotime("{$date} +1 day")));
+      if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth < $thisMonth) || ($nextYear === $thisYear && $nextMonth === $thisMonth && $nextDay <= $thisDay)) {
+        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
+      }
+    }
+    if($year !== 0 && $month !== 0 && $day === 0) { // 年月表示モードなら前月・今年・翌月ナビ表示
+      $date = sprintf("%04d-%02d-%02d", $year, $month, 1);
+      $prevYear = (int)(date("Y", strtotime("{$date} -1 month")));
+      $prevMonth = (int)(date("n", strtotime("{$date} -1 month")));
+      if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth <= $thisMonth)) {
+        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
+      }
+      if($year <= $thisYear) {
+        $links[] = "<a href=\"index.php?year={$year}\">今年</a>";
+      }
+      $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
+      if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth <= $thisMonth)) {
+        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
+      }
+    }
+    if($year !== 0 && $month === 0 && $day === 0) { // 年表示モードなら前年・翌年ナビ表示
+      $date = sprintf("%04d-%02d-%02d", $year, 1, 1);
+      $prevYear = (int)(date("Y", strtotime("{$date} -1 year")));
+      if($prevYear <= $thisYear) {
+        $links[] = "<a href=\"index.php?year={$prevYear}\">前年</a>";
+      }
+      $nextYear = (int)(date("Y", strtotime("{$date} +1 year")));
+      if($nextYear <= $thisYear) {
+        $links[] = "<a href=\"index.php?year={$nextYear}\">翌年</a>";
+      }
+    }
+    if(!empty($links)) {
       $contents .= <<<HTML
         <div class="links">
           <ul>
         HTML;
-      $prevYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
-      $prevMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "-1 month")));
-      if($prevYear < $thisYear || ($prevYear == $thisYear && $prevMonth <= $thisMonth)) {
-        $contents .= <<<HTML
-          <li>
-            <a href="index.php?year={$prevYear}&amp;month={$prevMonth}">前月</a>
-          </li>
-          HTML;
-      }
-      $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
-      $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
-      if($nextYear < $thisYear || ($nextYear == $thisYear && $nextMonth <= $thisMonth)) {
-        $contents .= <<<HTML
-          <li>
-            <a href="index.php?year={$nextYear}&amp;month={$nextMonth}">翌月</a>
-          </li>
-          HTML;
+      foreach($links as $link) {
+        $contents .= "<li>${link}</li>";
       }
       $contents .= <<<HTML
           </ul>
@@ -474,7 +533,11 @@ class View {
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
       $contents .= <<<HTML
         <div class="article" id="d{$date}">
-          <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
+          <div class="date">
+            <h3>
+              <a href="index.php?year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
+            </h3>
+          </div>
         HTML;
       if($logined) {
         $contents .= <<<HTML
