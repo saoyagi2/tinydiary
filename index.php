@@ -498,7 +498,11 @@ class View {
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
       $contents .= <<<HTML
         <div class="article" id="d{$date}">
-          <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
+          <div class="date">
+            <h3>
+              <a href="index.php?year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
+            </h3>
+          </div>
         HTML;
       if($logined) {
         $contents .= <<<HTML
