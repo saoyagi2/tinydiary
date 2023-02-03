@@ -69,8 +69,12 @@ class App {
     elseif($getMode === "search") {
       $this->search();
     }
-    else {
+    elseif(is_null($getMode)) {
       $this->show();
+    }
+    else {
+      $this->setNotice("modeが不正です");
+      header("Location: " . $this->getFullUrl());
     }
   }
 
@@ -201,14 +205,17 @@ class App {
       return;
     }
 
-    $article = $this->database->query(
+    $articles = $this->database->query(
       "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
       [
         ":year" => $year,
         ":month" => $month,
         ":day" => $day
-      ])[0];
-    if(empty($article)) {
+      ]);
+    if(!empty($articles)) {
+      $article = $articles[0];
+    }
+    else {
       $article = [
         "year" => $year,
         "month" => $month,
@@ -306,11 +313,11 @@ class App {
     $thisMonth = (int)date("m");
 
     // 来月以降の日記は表示しない
-    if($year > $thisYear || ($year == $thisYear && $month > $thisMonth)) {
+    if($year > $thisYear || ($year === $thisYear && $month > $thisMonth)) {
       return([]);
     }
 
-    if($year == $thisYear && $month == $thisMonth) {
+    if($year === $thisYear && $month === $thisMonth) {
       $lastDay = (int)date("d");
     }
     else {
@@ -319,7 +326,7 @@ class App {
     for($day = 1; $day <= $lastDay; $day++) {
       if(count(array_filter($articles, function($article) use($year, $month, $day) {
         return((int)$article["year"] === $year && (int)$article["month"] === $month && (int)$article["day"] === $day);
-      })) == 0) {
+      })) === 0) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
     }
