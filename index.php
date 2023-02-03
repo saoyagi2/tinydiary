@@ -306,11 +306,11 @@ class App {
     $thisMonth = (int)date("m");
 
     // 来月以降の日記は表示しない
-    if($year > $thisYear || ($year == $thisYear && $month > $thisMonth)) {
+    if($year > $thisYear || ($year === $thisYear && $month > $thisMonth)) {
       return([]);
     }
 
-    if($year == $thisYear && $month == $thisMonth) {
+    if($year === $thisYear && $month === $thisMonth) {
       $lastDay = (int)date("d");
     }
     else {
@@ -319,7 +319,7 @@ class App {
     for($day = 1; $day <= $lastDay; $day++) {
       if(count(array_filter($articles, function($article) use($year, $month, $day) {
         return((int)$article["year"] === $year && (int)$article["month"] === $month && (int)$article["day"] === $day);
-      })) == 0) {
+      })) === 0) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
     }
