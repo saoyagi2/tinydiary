@@ -201,14 +201,17 @@ class App {
       return;
     }
 
-    $article = $this->database->query(
+    $articles = $this->database->query(
       "SELECT * FROM articles WHERE year = :year AND month = :month AND day = :day",
       [
         ":year" => $year,
         ":month" => $month,
         ":day" => $day
-      ])[0];
-    if(empty($article)) {
+      ]);
+    if(!empty($articles)) {
+      $article = $articles[0];
+    }
+    else {
       $article = [
         "year" => $year,
         "month" => $month,
