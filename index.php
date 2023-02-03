@@ -263,7 +263,7 @@ class App {
         ":message" => $message
       ]);
 
-    header("Location: " . $this->getFullUrl(["year" => $year, "month" => $month]));
+    header("Location: " . $this->getFullUrl(["year" => $year, "month" => $month, "day" => $day]));
   }
 
   /**
