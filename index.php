@@ -69,8 +69,12 @@ class App {
     elseif($getMode === "search") {
       $this->search();
     }
-    else {
+    elseif(is_null($getMode)) {
       $this->show();
+    }
+    else {
+      $this->setNotice("modeが不正です");
+      header("Location: " . $this->getFullUrl());
     }
   }
 
