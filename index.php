@@ -98,6 +98,10 @@ class App {
     if(is_null($year) && is_null($month) && is_null($day)) {
       $year = (int)date("Y");
       $month = (int)date("m");
+      $sort = "DESC";
+    }
+    else {
+      $sort = "ASC";
     }
 
     if(!checkdate($month ?? 1, $day ?? 1, $year ?? 2000)) { // $month=2, $day=29 を OK とするため$year無視定時は 2000 とする
@@ -120,10 +124,10 @@ class App {
       $params["day"] = $day;
     }
     if(!empty($wheres)) {
-      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year, month, day";
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year, month, day " . $sort;
       $articles = $this->database->query($sql, $params);
       if($this->logined && !is_null($year) && !is_null($month) && is_null($day)) {
-        $articles = $this->interpolateArticles($articles, $year, $month);
+        $articles = $this->interpolateArticles($articles, $year, $month, $sort);
       }
     }
 
@@ -305,9 +309,10 @@ class App {
    * @param array $articles 欠落込み日記データ
    * @param int $year 年
    * @param int $month 月
+   * @param string $sort ソート順。"ASC"なら昇順、"DESC"なら降順
    * @return arrray $articles 補完済日記データ
    */
-  private function interpolateArticles(array $articles, int $year, int $month) : array
+  private function interpolateArticles(array $articles, int $year, int $month, string $sort) : array
   {
     $thisYear = (int)date("Y");
     $thisMonth = (int)date("m");
@@ -330,8 +335,13 @@ class App {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
     }
-    usort($articles, function($a, $b) {
-      return($a["day"] <=> $b["day"]);
+    usort($articles, function($a, $b) use($sort) {
+      if($sort === "ASC") {
+        return($a["day"] <=> $b["day"]);
+      }
+      else {
+        return($b["day"] <=> $a["day"]);
+      }
     });
 
     return($articles);
