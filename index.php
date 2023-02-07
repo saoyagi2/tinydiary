@@ -328,10 +328,11 @@ class App {
     else {
       $lastDay = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
     }
+    $dates = array_map(function($article) {
+      return(sprintf("%04d%02d%02d", (int)$article["year"], (int)$article["month"], (int)$article["day"]));
+    }, $articles);
     for($day = 1; $day <= $lastDay; $day++) {
-      if(count(array_filter($articles, function($article) use($year, $month, $day) {
-        return((int)$article["year"] === $year && (int)$article["month"] === $month && (int)$article["day"] === $day);
-      })) === 0) {
+      if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $dates, true)) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
     }
