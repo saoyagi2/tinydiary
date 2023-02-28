@@ -285,6 +285,7 @@ class App {
     $formToken = $this->getParam("csrf_token", "POST");
     if($this->checkCsrfToken($formToken) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
       $_SESSION["logined"] = TRUE;
+      $this->getCsrfToken(TRUE);
       $this->setNotice("ログインしました");
     }
     else {
@@ -413,13 +414,15 @@ class App {
   /**
    * CSRF対策トークン生成
    *
-   * @return $string CSRF対策トークン
+   * @param bool $reset TRUEならトークン生成、FALSEなら再利用
+   * @return string CSRF対策トークン
    */
-  private function getCsrfToken() : string
+  private function getCsrfToken(bool $reset = FALSE) : string
   {
-    $token = bin2hex(random_bytes(32));
-    $_SESSION["csrf_token"] = $token;
-    return($token);
+    if(!isset($_SESSION["csrf_token"]) || $reset) {
+      $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
+    }
+    return($_SESSION["csrf_token"]);
   }
 
   /**
@@ -431,7 +434,6 @@ class App {
   private function checkCsrfToken(string $formToken) : bool
   {
     $csrfToken = $_SESSION["csrf_token"];
-    unset($_SESSION["csrf_token"]);
     return(hash_equals($csrfToken, $formToken));
   }
 }
