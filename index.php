@@ -396,7 +396,7 @@ class App {
    */
   private function getNotice() : ?string
   {
-    $notice = $_SESSION["notice"] ?? "";
+    $notice = $_SESSION["notice"] ?? NULL;
     unset($_SESSION["notice"]);
     return($notice);
   }
