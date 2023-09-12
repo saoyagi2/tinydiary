@@ -638,10 +638,15 @@ class View {
           <input type="hidden" name="year" value="${year}">
           <input type="hidden" name="month" value="${month}">
           <input type="hidden" name="day" value="${day}">
-          <textarea name="message">{$message}</textarea>
+          <textarea id="message" name="message">{$message}</textarea>
           <input type="submit" value="更新">
         </form>
       </div>
+      <script>
+      window.addEventListener('load', () => {
+        document.getElementById("message").focus();
+      });
+      </script>
       HTML;
     $this->output([
       "title" => $viewData["title"],
