@@ -29,6 +29,9 @@
 }
 .message {
 }
+.message em {
+  background-color: yellow;
+}
 .links {
 }
 .links ul {
