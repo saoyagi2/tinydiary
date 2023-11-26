@@ -464,7 +464,7 @@ class View {
           <label>検索:
             <input type="text" id="keyword" name="keyword" value="{$keyword}">
           </label>
-          <input type="submit" value="検索">
+          <button type="submit">検索</button>
         </form>
       </div>
       HTML;
@@ -600,7 +600,7 @@ class View {
             <label>パスワード:
               <input type="password" name="password">
             </label>
-            <input type="submit" value="ログイン">
+            <button type="submit">ログイン</button>
           </form>
         </div>
         HTML;
@@ -647,7 +647,7 @@ class View {
           <input type="hidden" name="month" value="${month}">
           <input type="hidden" name="day" value="${day}">
           <textarea id="message" name="message">{$message}</textarea>
-          <input type="submit" value="更新">
+          <button type="submit">更新</button>
         </form>
       </div>
       <script>
