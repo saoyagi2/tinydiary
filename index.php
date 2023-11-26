@@ -534,6 +534,9 @@ class View {
 
     $displayYear = 0;
     $displayMonth = 0;
+    $keywords = array_filter(preg_split("/[　\s]/u", $keyword), function($fragment) {
+      return !empty($fragment);
+    });
     foreach($viewData["articles"] as $article) {
       $year = (int)$article["year"];
       $month = (int)$article["month"];
@@ -573,7 +576,11 @@ class View {
       HTML;
 
       foreach(preg_split("/\R/u", $article["message"]) as $fragment) {
-        $contents .= "<p>" . $this->h($fragment) . "</p>";
+        $_contents = $this->h($fragment);
+        foreach($keywords as $keyword) {
+          $_contents = str_replace($keyword, "<em>$keyword</em>", $_contents);
+        }
+        $contents .= "<p>$_contents</p>";
       }
       $contents .= <<<HTML
           </div>
