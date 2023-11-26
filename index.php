@@ -462,7 +462,7 @@ class View {
         <form action="index.php?mode=view" method="GET">
           <input type="hidden" name="mode" value="search">
           <label>検索:
-            <input type="text" name="keyword" value="{$keyword}">
+            <input type="text" id="keyword" name="keyword" value="{$keyword}">
           </label>
           <input type="submit" value="検索">
         </form>
@@ -605,6 +605,14 @@ class View {
         </div>
         HTML;
     }
+
+    $contents .= <<<HTML
+      <script>
+      window.addEventListener('load', () => {
+        document.getElementById("keyword").focus();
+      });
+      </script>
+    HTML;
 
     $this->output([
       "title" => $viewData["title"],
