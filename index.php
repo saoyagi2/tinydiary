@@ -462,9 +462,9 @@ class View {
         <form action="index.php?mode=view" method="GET">
           <input type="hidden" name="mode" value="search">
           <label>検索:
-            <input type="text" name="keyword" value="{$keyword}">
+            <input type="text" id="keyword" name="keyword" value="{$keyword}">
           </label>
-          <input type="submit" value="検索">
+          <button type="submit">検索</button>
         </form>
       </div>
       HTML;
@@ -600,11 +600,19 @@ class View {
             <label>パスワード:
               <input type="password" name="password">
             </label>
-            <input type="submit" value="ログイン">
+            <button type="submit">ログイン</button>
           </form>
         </div>
         HTML;
     }
+
+    $contents .= <<<HTML
+      <script>
+      window.addEventListener('load', () => {
+        document.getElementById("keyword").focus();
+      });
+      </script>
+    HTML;
 
     $this->output([
       "title" => $viewData["title"],
@@ -639,7 +647,7 @@ class View {
           <input type="hidden" name="month" value="${month}">
           <input type="hidden" name="day" value="${day}">
           <textarea id="message" name="message">{$message}</textarea>
-          <input type="submit" value="更新">
+          <button type="submit">更新</button>
         </form>
       </div>
       <script>
