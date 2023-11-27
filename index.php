@@ -268,14 +268,25 @@ class App {
       return;
     }
 
-    $this->database->query(
-      "REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)",
-      [
-        ":year" => $year,
-        ":month" => $month,
-        ":day" => $day,
-        ":message" => $message
-      ]);
+    if(!empty($message)) {
+      $this->database->query(
+        "REPLACE INTO articles (year, month, day, message) VALUES(:year, :month, :day, :message)",
+        [
+          ":year" => $year,
+          ":month" => $month,
+          ":day" => $day,
+          ":message" => $message
+        ]);
+    }
+    else {
+      $this->database->query(
+        "DELETE FROM articles WHERE year=:year AND month=:month AND day=:day",
+        [
+          ":year" => $year,
+          ":month" => $month,
+          ":day" => $day,
+        ]);
+    }
 
     header("Location: " . $this->getFullUrl(["year" => $year, "month" => $month, "day" => $day]));
   }
