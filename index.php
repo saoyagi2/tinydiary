@@ -126,8 +126,8 @@ class App {
     if(!empty($wheres)) {
       $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ORDER BY year, month, day " . $sort;
       $articles = $this->database->query($sql, $params);
-      if($this->logined && !is_null($year) && !is_null($month) && is_null($day)) {
-        $articles = $this->interpolateArticles($articles, $year, $month, $sort);
+      if($this->logined) {
+        $articles = $this->interpolateArticles($articles, $year, $month, $day, $sort);
       }
     }
 
@@ -322,41 +322,84 @@ class App {
    * 日記データ補完
    *
    * @param array $articles 欠落込み日記データ
-   * @param int $year 年
-   * @param int $month 月
+   * @param ?int $year 年
+   * @param ?int $month 月
+   * @param ?int $day 日
    * @param string $sort ソート順。"ASC"なら昇順、"DESC"なら降順
    * @return arrray $articles 補完済日記データ
    */
-  private function interpolateArticles(array $articles, int $year, int $month, string $sort) : array
+  private function interpolateArticles(array $articles, ?int $year, ?int $month, ?int $day, string $sort) : array
   {
+    // 年/年月/年月日以外なら補完なし
+    if(!(
+      (!is_null($year) && is_null($month) && is_null($day)) ||
+      (!is_null($year) && !is_null($month) && is_null($day)) ||
+      (!is_null($year) && !is_null($month) && !is_null($day)))) {
+      return($articles);
+    }
+
     $thisYear = (int)date("Y");
     $thisMonth = (int)date("m");
+    $thisDay = (int)date("j");
 
-    // 来月以降の日記は表示しない
-    if($year > $thisYear || ($year === $thisYear && $month > $thisMonth)) {
+    // 未来の日記は表示しない
+    if(($year > $thisYear) ||
+      (!is_null($month) && $year === $thisYear && $month > $thisMonth) ||
+      (!is_null($month) && !is_null($day) && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
       return([]);
     }
 
-    if($year === $thisYear && $month === $thisMonth) {
-      $lastDay = (int)date("d");
-    }
-    else {
-      $lastDay = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
-    }
-    $dates = array_map(function($article) {
+    $article_dates = array_map(function($article) {
       return(sprintf("%04d%02d%02d", (int)$article["year"], (int)$article["month"], (int)$article["day"]));
     }, $articles);
-    for($day = 1; $day <= $lastDay; $day++) {
-      if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $dates, true)) {
+
+
+    if(!is_null($year) && is_null($month) && is_null($day)) {
+      if($year === $thisYear) {
+        $lastMonth = (int)date("m");
+      }
+      else {
+        $lastMonth = 12;
+      }
+      for($_month = 1; $_month <= $lastMonth; $_month++) {
+        if($year === $thisYear && $_month === $thisMonth) {
+          $lastDay = (int)date("d");
+        }
+        else {
+          $lastDay = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $_month, 1)));
+        }
+        for($_day = 1; $_day <= $lastDay; $_day++) {
+          if(!in_array(sprintf("%04d%02d%02d", $year, $_month, $_day), $article_dates, true)) {
+            $articles[] = ["year" => $year, "month" => $_month, "day" => $_day, "message" => ""];
+          }
+        }
+      }
+    }
+    else if(!is_null($year) && !is_null($month) && is_null($day)) {
+      if($year === $thisYear && $month === $thisMonth) {
+        $lastDay = (int)date("d");
+      }
+      else {
+        $lastDay = (int)date("t", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1)));
+      }
+      for($_day = 1; $_day <= $lastDay; $_day++) {
+        if(!in_array(sprintf("%04d%02d%02d", $year, $month, $_day), $article_dates, true)) {
+          $articles[] = ["year" => $year, "month" => $month, "day" => $_day, "message" => ""];
+        }
+      }
+    }
+    else if(!is_null($year) && !is_null($month) && !is_null($day)) {
+      if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $article_dates, true)) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
     }
+
     usort($articles, function($a, $b) use($sort) {
       if($sort === "ASC") {
-        return($a["day"] <=> $b["day"]);
+        return($a["month"] <=> $b["month"] ?: $a["day"] <=> $b["day"]);
       }
       else {
-        return($b["day"] <=> $a["day"]);
+        return($b["month"] <=> $a["month"] ?: $b["day"] <=> $a["day"]);
       }
     });
 
