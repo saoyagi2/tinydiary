@@ -546,8 +546,6 @@ class View {
         HTML;
     }
 
-    $displayYear = 0;
-    $displayMonth = 0;
     $keywords = array_filter(preg_split("/[　\s]/u", $keyword), function($fragment) {
       return !empty($fragment);
     });
@@ -556,16 +554,6 @@ class View {
       $month = (int)$article["month"];
       $day = (int)$article["day"];
       $weekday = $this->weekday($year, $month, $day);
-
-      if($displayYear !== $year || $displayMonth !== $month) {
-        $contents .= <<<HTML
-          <div class="yearmonth">
-            <h2><a href="index.php?year={$year}&amp;month={$month}">{$year}年{$month}月</a></h2>
-          </div>
-          HTML;
-        $displayYear = $year;
-        $displayMonth = $month;
-      }
 
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
       $contents .= <<<HTML
