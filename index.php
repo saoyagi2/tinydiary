@@ -133,6 +133,7 @@ class App {
 
     $this->view->displayShow([
       "title" => $this->config["title"],
+      "description" => $this->config["description"],
       "articles" => $articles,
       "year" => $year,
       "month" => $month,
@@ -179,6 +180,7 @@ class App {
 
     $this->view->displayShow([
       "title" => $this->config["title"],
+      "description" => $this->config["description"],
       "articles" => $articles,
       "keyword" => $keyword,
       "logined" => $this->logined,
@@ -230,6 +232,7 @@ class App {
 
     $this->view->displayEdit([
       "title" => $this->config["title"],
+      "description" => $this->config["description"],
       "article" => $article,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -623,6 +626,7 @@ class View {
 
     $this->output([
       "title" => $viewData["title"],
+      "description" => $viewData["description"],
       "notice" => $this->h($viewData["notice"] ?? ""),
       "contents" => $contents,
       "css" => $viewData["css"],
@@ -665,6 +669,7 @@ class View {
       HTML;
     $this->output([
       "title" => $viewData["title"],
+      "description" => $viewData["description"],
       "notice" => $this->h($viewData["notice"] ?? ""),
       "contents" => $contents,
       "css" => $viewData["css"],
@@ -681,6 +686,19 @@ class View {
   {
     $title = $this->h($outputData["title"]);
     $css = urlencode(!empty($outputData["css"]) ? $outputData["css"] : "default.css");
+    if(!empty($outputData["description"])) {
+      $description = $this->h($outputData["description"]);
+      $descriptionMetaHtml = <<<HTML
+        <meta name="description" content="{$description}">
+        HTML;
+      $descriptionBodyHtml = <<<HTML
+        <div id="description">{$description}</div>
+        HTML;
+    }
+    else {
+      $descriptionMetaHtml = "";
+      $descriptionBodyHtml = "";
+    }
     if(!empty($outputData["favicon"])) {
       $favicon = urlencode($outputData["favicon"]);
       $faviconHtml = <<<HTML
@@ -708,6 +726,7 @@ class View {
         <head>
           <meta charset="utf-8">
           <title>{$title}</title>
+          {$descriptionMetaHtml}
           <link rel="stylesheet" href="{$css}" type="text/css" title="base">
           {$faviconHtml}
           <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -716,6 +735,7 @@ class View {
           <div id="container">
             <header id="header">
               <h1><a href="index.php">{$title}</a></h1>
+              {$descriptionBodyHtml}
             </header>
             {$noticeHtml}
             <div id="contents">

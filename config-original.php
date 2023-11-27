@@ -10,6 +10,9 @@ $config = [
   // 日記の名称
   "title" => "",
 
+  // 日記の説明
+  "description" => "",
+
   // 編集モードのパスワード
   "password" => "",
 
