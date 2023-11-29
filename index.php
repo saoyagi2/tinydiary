@@ -589,6 +589,21 @@ class View {
         HTML;
     }
 
+    if($year !== 0 && $month !== 0 && $day === 0) {
+      $contents .= <<<HTML
+        <div class="yearmonth">
+          <h2>{$year}年{$month}月</h2>
+        </div>
+        HTML;
+    }
+    if($year !== 0 && $month === 0 && $day === 0) {
+      $contents .= <<<HTML
+        <div class="yearmonth">
+          <h2>{$year}年</h2>
+        </div>
+        HTML;
+    }
+
     $keywords = array_filter(preg_split("/[　\s]/u", $keyword), function($fragment) {
       return !empty($fragment);
     });
