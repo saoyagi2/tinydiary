@@ -69,7 +69,7 @@ class App {
     elseif($getAction === "search") {
       $this->search();
     }
-    elseif(is_null($getAction)) {
+    elseif($getAction === "view" || is_null($getAction)) {
       $this->show();
     }
     else {
@@ -538,16 +538,16 @@ class View {
       $prevMonth = (int)(date("n", strtotime("{$date} -1 day")));
       $prevDay = (int)(date("j", strtotime("{$date} -1 day")));
       if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth < $thisMonth) || ($prevYear === $thisYear && $prevMonth === $thisMonth && $prevDay <= $thisDay)) {
-        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}&amp;month={$month}\">当月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$year}&amp;month={$month}\">当月</a>";
       }
       $nextYear = (int)(date("Y", strtotime("{$date} +1 day")));
       $nextMonth = (int)(date("n", strtotime("{$date} +1 day")));
       $nextDay = (int)(date("j", strtotime("{$date} +1 day")));
       if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth < $thisMonth) || ($nextYear === $thisYear && $nextMonth === $thisMonth && $nextDay <= $thisDay)) {
-        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
       }
     }
     if($year !== 0 && $month !== 0 && $day === 0) { // 年月表示モードなら前月・今年・翌月ナビ表示
@@ -555,26 +555,26 @@ class View {
       $prevYear = (int)(date("Y", strtotime("{$date} -1 month")));
       $prevMonth = (int)(date("n", strtotime("{$date} -1 month")));
       if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth <= $thisMonth)) {
-        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}\">当年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$year}\">当年</a>";
       }
       $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth <= $thisMonth)) {
-        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
       }
     }
     if($year !== 0 && $month === 0 && $day === 0) { // 年表示モードなら前年・翌年ナビ表示
       $date = sprintf("%04d-%02d-%02d", $year, 1, 1);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 year")));
       if($prevYear <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$prevYear}\">前年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}\">前年</a>";
       }
       $nextYear = (int)(date("Y", strtotime("{$date} +1 year")));
       if($nextYear <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$nextYear}\">翌年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}\">翌年</a>";
       }
     }
     if(!empty($links)) {
@@ -620,12 +620,12 @@ class View {
         <div class="article" id="d{$date}">
           <div class="date">
             <h3>
-              <a href="index.php?year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
+              <a href="index.php?action=view&amp;year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
             </h3>
           </div>
           <div class="links">
             <ul>
-              <li><a href="index.php?month={$month}&amp;day={$day}">長年日記</a></li>
+              <li><a href="index.php?action=view&amp;month={$month}&amp;day={$day}">長年日記</a></li>
         HTML;
       if($logined) {
         $contents .= <<<HTML
