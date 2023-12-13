@@ -52,28 +52,28 @@ class App {
    */
   public function run() : void
   {
-    $getMode = $this->getParam("mode", "GET");
-    $postMode = $this->getParam("mode", "POST");
-    if($postMode === "login") {
+    $getAction = $this->getParam("action", "GET");
+    $postAction = $this->getParam("action", "POST");
+    if($postAction === "login") {
       $this->login();
     }
-    elseif($getMode === "logout") {
+    elseif($getAction === "logout") {
       $this->logout();
     }
-    elseif($postMode === "update") {
+    elseif($postAction === "update") {
       $this->update();
     }
-    elseif($getMode === "edit") {
+    elseif($getAction === "edit") {
       $this->edit();
     }
-    elseif($getMode === "search") {
+    elseif($getAction === "search") {
       $this->search();
     }
-    elseif(is_null($getMode)) {
+    elseif(is_null($getAction)) {
       $this->show();
     }
     else {
-      $this->setNotice("modeが不正です");
+      $this->setNotice("Actionが不正です");
       header("Location: " . $this->getFullUrl());
     }
   }
@@ -516,8 +516,8 @@ class View {
 
     $contents .= <<<HTML
       <div class="form">
-        <form action="index.php?mode=view" method="GET">
-          <input type="hidden" name="mode" value="search">
+        <form action="index.php" method="GET">
+          <input type="hidden" name="action" value="search">
           <label>検索:
             <input type="text" id="keyword" name="keyword" value="{$keyword}">
           </label>
@@ -627,7 +627,7 @@ class View {
         HTML;
       if($logined) {
         $contents .= <<<HTML
-          <li><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
+          <li><a href="index.php?action=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
         HTML;
       }
       $contents .= <<<HTML
@@ -652,7 +652,7 @@ class View {
       $contents .= <<<HTML
         <div class="links">
           <ul>
-            <li><a href="index.php?mode=logout">ログアウト</a></li>
+            <li><a href="index.php?action=logout">ログアウト</a></li>
           </ul>
         </div>
         HTML;
@@ -662,7 +662,7 @@ class View {
       $contents .= <<<HTML
         <div class="form">
           <form action="index.php" method="POST">
-            <input type="hidden" name="mode" value="login">
+            <input type="hidden" name="action" value="login">
             <input type="hidden" name="csrf_token" value="{$csrfToken}">
             <label>パスワード:
               <input type="password" name="password">
@@ -709,7 +709,7 @@ class View {
       <div class="date"><h3>{$year}年{$month}月{$day}日({$weekday})</h3></div>
       <div class="form">
         <form action="index.php" method="POST">
-          <input type="hidden" name="mode" value="update">
+          <input type="hidden" name="action" value="update">
           <input type="hidden" name="csrf_token" value="{$csrfToken}">
           <input type="hidden" name="year" value="${year}">
           <input type="hidden" name="month" value="${month}">
