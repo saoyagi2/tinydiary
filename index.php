@@ -69,7 +69,7 @@ class App {
     elseif($getAction === "search") {
       $this->search();
     }
-    elseif($getAction === "view" || is_null($getAction)) {
+    elseif($getAction === "view" || $getAction === NULL) {
       $this->show();
     }
     else {
@@ -86,7 +86,7 @@ class App {
     $year = $this->getParam("year", "GET", "int");
     $month = $this->getParam("month", "GET", "int");
     $day = $this->getParam("day", "GET", "int");
-    if(is_null($year) && is_null($month) && is_null($day)) {
+    if($year === NULL && $month === NULL && $day === NULL) {
       $year = (int)date("Y");
       $month = (int)date("m");
       $sort = "DESC";
@@ -323,9 +323,9 @@ class App {
   {
     // 年/年月/年月日以外なら補完なし
     if(!(
-      (!is_null($year) && is_null($month) && is_null($day)) ||
-      (!is_null($year) && !is_null($month) && is_null($day)) ||
-      (!is_null($year) && !is_null($month) && !is_null($day)))) {
+      ($year !== NULL && $month === NULL && $day === NULL) ||
+      ($year !== NULL && $month !== NULL && $day === NULL) ||
+      ($year !== NULL && $month !== NULL && $day !== NULL))) {
       return($articles);
     }
 
@@ -335,8 +335,8 @@ class App {
 
     // 未来の日記は表示しない
     if(($year > $thisYear) ||
-      (!is_null($month) && $year === $thisYear && $month > $thisMonth) ||
-      (!is_null($month) && !is_null($day) && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
+      ($month !== NULL && $year === $thisYear && $month > $thisMonth) ||
+      ($month !== NULL && $day !== NULL && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
       return([]);
     }
 
@@ -345,7 +345,7 @@ class App {
     }, $articles);
 
 
-    if(!is_null($year) && is_null($month) && is_null($day)) {
+    if($year !== NULL && $month === NULL && $day === NULL) {
       if($year === $thisYear) {
         $lastMonth = (int)date("m");
       }
@@ -366,7 +366,7 @@ class App {
         }
       }
     }
-    else if(!is_null($year) && !is_null($month) && is_null($day)) {
+    else if($year !== NULL && $month !== NULL && $day === NULL) {
       if($year === $thisYear && $month === $thisMonth) {
         $lastDay = (int)date("d");
       }
@@ -379,7 +379,7 @@ class App {
         }
       }
     }
-    else if(!is_null($year) && !is_null($month) && !is_null($day)) {
+    else if($year !== NULL && $month !== NULL && $day !== NULL) {
       if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $article_dates, true)) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
