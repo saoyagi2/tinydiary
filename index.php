@@ -621,20 +621,20 @@ class View {
               <a href="index.php?year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
             </h3>
           </div>
+          <div class="links">
+            <ul>
+              <li><a href="index.php?month={$month}&amp;day={$day}">長年日記</a></li>
         HTML;
       if($logined) {
         $contents .= <<<HTML
-          <div class="links">
-            <ul>
-              <li><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
-            </ul>
-          </div>
-          HTML;
+          <li><a href="index.php?mode=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
+        HTML;
       }
       $contents .= <<<HTML
+          </ul>
+        </div>
         <div class="message">
       HTML;
-
       foreach(preg_split("/\R/u", $article["message"]) as $fragment) {
         $_contents = $this->h($fragment);
         foreach($keywords as $keyword) {
