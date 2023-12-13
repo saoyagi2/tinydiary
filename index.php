@@ -83,18 +83,9 @@ class App {
    */
   private function show() : void
   {
-    $year = $this->getParam("year", "GET");
-    if(!is_null($year)) {
-      $year = (int)$year;
-    }
-    $month = $this->getParam("month", "GET");
-    if(!is_null($month)) {
-      $month = (int)$month;
-    }
-    $day = $this->getParam("day", "GET");
-    if(!is_null($day)) {
-      $day = (int)$day;
-    }
+    $year = $this->getParam("year", "GET", "int");
+    $month = $this->getParam("month", "GET", "int");
+    $day = $this->getParam("day", "GET", "int");
     if(is_null($year) && is_null($month) && is_null($day)) {
       $year = (int)date("Y");
       $month = (int)date("m");
@@ -202,9 +193,9 @@ class App {
       return;
     }
 
-    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
-    $month = (int)($this->getParam("month", "GET") ?? date("m"));
-    $day = (int)($this->getParam("day", "GET") ?? date("d"));
+    $year = $this->getParam("year", "GET", "int");
+    $month = $this->getParam("month", "GET", "int");
+    $day = $this->getParam("day", "GET", "int");
     if(!checkdate($month, $day, $year)) {
       $this->setNotice("日付が異常です");
       header("Location: " . $this->getFullUrl());
@@ -258,10 +249,10 @@ class App {
       return;
     }
 
-    $year = (int)($this->getParam("year", "POST") ?? 0);
-    $month = (int)($this->getParam("month", "POST") ?? 0);
-    $day = (int)($this->getParam("day", "POST") ?? 0);
-    $message = $this->getParam("message", "POST") ?? "";
+    $year = $this->getParam("year", "POST", "int");
+    $month = $this->getParam("month", "POST", "int");
+    $day = $this->getParam("day", "POST", "int");
+    $message = $this->getParam("message", "POST");
     if(!checkdate($month, $day, $year)) {
       $this->setNotice("日付が異常です");
       header("Location: " . $this->getFullUrl());
@@ -411,9 +402,10 @@ class App {
    *
    * @param string $key パラメータ名
    * @param string $method メソッド(GET, POST)
+   * @param ?string $type 型
    * @return ?string パラメータ値
    */
-  private function getParam(string $key, string $method) : ?string
+  private function getParam(string $key, string $method, ?string $type = NULL) : mixed
   {
     switch($method) {
       case "GET":
@@ -424,6 +416,16 @@ class App {
         break;
       default:
         $param = NULL;
+    }
+    if($param !== NULL && $type !== NULL) {
+      switch($type) {
+        case "int":
+          $param = (int)$param;
+          break;
+        case "bool":
+          $param = (bool)$param;
+          break;
+      }
     }
     return($param);
   }
