@@ -44,7 +44,7 @@ class App {
     }
 
     session_start();
-    $this->logined = $_SESSION["logined"] ?? FALSE;
+    $this->logined = $_SESSION["logined"] ?? false;
   }
 
   /**
@@ -69,7 +69,7 @@ class App {
     elseif($getAction === "search") {
       $this->search();
     }
-    elseif($getAction === "view" || $getAction === NULL) {
+    elseif($getAction === "view" || $getAction === null) {
       $this->show();
     }
     else {
@@ -291,8 +291,8 @@ class App {
   {
     $formToken = $this->getParam("csrf_token", "POST");
     if($this->checkCsrfToken($formToken) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
-      $_SESSION["logined"] = TRUE;
-      $this->getCsrfToken(TRUE);
+      $_SESSION["logined"] = true;
+      $this->getCsrfToken(true);
       $this->setNotice("ログインしました");
     }
     else {
@@ -306,7 +306,7 @@ class App {
    */
   private function logout() : void
   {
-    $_SESSION["logined"] = FALSE;
+    $_SESSION["logined"] = false;
     $this->setNotice("ログアウトしました");
     header("Location: " . $this->getFullUrl());
   }
@@ -321,31 +321,31 @@ class App {
    */
   private function getViewMode(?int $year, ?int $month, ?int $day) : ?string
   {
-    if($year === NULL && $month === NULL && $day === NULL) {
+    if($year === null && $month === null && $day === null) {
       return("default");
     }
-    if($year !== NULL && $month === NULL && $day === NULL) {
+    if($year !== null && $month === null && $day === null) {
       return("year");
     }
-    if($year === NULL && $month !== NULL && $day === NULL) {
+    if($year === null && $month !== null && $day === null) {
       return("month");
     }
-    if($year === NULL && $month === NULL && $day !== NULL) {
+    if($year === null && $month === null && $day !== null) {
       return("day");
     }
-    if($year !== NULL && $month !== NULL && $day === NULL) {
+    if($year !== null && $month !== null && $day === null) {
       return("yearmonth");
     }
-    if($year !== NULL && $month === NULL && $day !== NULL) {
+    if($year !== null && $month === null && $day !== null) {
       return("yearday");
     }
-    if($year !== NULL && $month !== NULL && $day !== NULL) {
+    if($year !== null && $month !== null && $day !== null) {
       return("yearmonthday");
     }
-    if($year === NULL && $month !== NULL && $day !== NULL) {
+    if($year === null && $month !== null && $day !== null) {
       return("monthday");
     }
-    return(NULL);
+    return(null);
   }
 
   /**
@@ -442,19 +442,19 @@ class App {
    * @param ?string $type 型
    * @return ?string パラメータ値
    */
-  private function getParam(string $key, string $method, ?string $type = NULL) : mixed
+  private function getParam(string $key, string $method, ?string $type = null) : mixed
   {
     switch($method) {
       case "GET":
-        $param = $_GET[$key] ?? NULL;
+        $param = $_GET[$key] ?? null;
         break;
       case "POST":
-        $param = $_POST[$key] ?? NULL;
+        $param = $_POST[$key] ?? null;
         break;
       default:
-        $param = NULL;
+        $param = null;
     }
-    if($param !== NULL && $type !== NULL) {
+    if($param !== null && $type !== null) {
       switch($type) {
         case "int":
           $param = (int)$param;
@@ -473,7 +473,7 @@ class App {
    * @param ?array $queries クエリ
    * @return string フルURL
    */
-  private function getFullUrl(?array $queries = NULL) : string
+  private function getFullUrl(?array $queries = null) : string
   {
     $fullUrl = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
     if(!empty($queries)) {
@@ -492,7 +492,7 @@ class App {
    */
   private function getNotice() : ?string
   {
-    $notice = $_SESSION["notice"] ?? NULL;
+    $notice = $_SESSION["notice"] ?? null;
     unset($_SESSION["notice"]);
     return($notice);
   }
@@ -510,10 +510,10 @@ class App {
   /**
    * CSRF対策トークン生成
    *
-   * @param bool $reset TRUEならトークン生成、FALSEなら再利用
+   * @param bool $reset trueならトークン生成、falseなら再利用
    * @return string CSRF対策トークン
    */
-  private function getCsrfToken(bool $reset = FALSE) : string
+  private function getCsrfToken(bool $reset = false) : string
   {
     if(!isset($_SESSION["csrf_token"]) || $reset) {
       $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
@@ -877,7 +877,7 @@ class View {
  */
 class Database {
   /** @var PDO */
-  private $conn = NULL;
+  private $conn = null;
 
   /**
    * コンストラクタ
@@ -898,7 +898,7 @@ class Database {
    */
   private function connectDatabase(string $dbPath) : void
   {
-    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, NULL, NULL, [
+    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, null, null, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
