@@ -86,7 +86,8 @@ class App {
     $year = $this->getParam("year", "GET", "int");
     $month = $this->getParam("month", "GET", "int");
     $day = $this->getParam("day", "GET", "int");
-    if($year === NULL && $month === NULL && $day === NULL) {
+    $viewMode = $this->getViewMode($year, $month, $day);
+    if($viewMode === "default") {
       $year = (int)date("Y");
       $month = (int)date("m");
       $sort = "DESC";
@@ -129,6 +130,7 @@ class App {
       "year" => $year,
       "month" => $month,
       "day" => $day,
+      "viewMode" => $viewMode,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -310,6 +312,43 @@ class App {
   }
 
   /**
+   * 表示モード
+   *
+   * @param ?int $year 年
+   * @param ?int $month 月
+   * @param ?int $day 日
+   * @return ?string モード(default/year/month/day/yearmonth/yearday/yearmonthday/monthday)
+   */
+  private function getViewMode(?int $year, ?int $month, ?int $day) : ?string
+  {
+    if($year === NULL && $month === NULL && $day === NULL) {
+      return("default");
+    }
+    if($year !== NULL && $month === NULL && $day === NULL) {
+      return("year");
+    }
+    if($year === NULL && $month !== NULL && $day === NULL) {
+      return("month");
+    }
+    if($year === NULL && $month === NULL && $day !== NULL) {
+      return("day");
+    }
+    if($year !== NULL && $month !== NULL && $day === NULL) {
+      return("yearmonth");
+    }
+    if($year !== NULL && $month === NULL && $day !== NULL) {
+      return("yearday");
+    }
+    if($year !== NULL && $month !== NULL && $day !== NULL) {
+      return("yearmonthday");
+    }
+    if($year === NULL && $month !== NULL && $day !== NULL) {
+      return("monthday");
+    }
+    return(NULL);
+  }
+
+  /**
    * 日記データ補完
    *
    * @param array $articles 欠落込み日記データ
@@ -322,10 +361,8 @@ class App {
   private function interpolateArticles(array $articles, ?int $year, ?int $month, ?int $day, string $sort) : array
   {
     // 年/年月/年月日以外なら補完なし
-    if(!(
-      ($year !== NULL && $month === NULL && $day === NULL) ||
-      ($year !== NULL && $month !== NULL && $day === NULL) ||
-      ($year !== NULL && $month !== NULL && $day !== NULL))) {
+    $viewMode = $this->getViewMode($year, $month, $day);
+    if(!in_array($viewMode, ["year", "yearmonth", "yearmonthday"], true)) {
       return($articles);
     }
 
@@ -335,8 +372,8 @@ class App {
 
     // 未来の日記は表示しない
     if(($year > $thisYear) ||
-      ($month !== NULL && $year === $thisYear && $month > $thisMonth) ||
-      ($month !== NULL && $day !== NULL && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
+      (in_array($viewMode, ["yearmonth", "yearmonthday"], true) && $year === $thisYear && $month > $thisMonth) ||
+      ($viewMode === "yearmonthday" && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
       return([]);
     }
 
@@ -345,7 +382,7 @@ class App {
     }, $articles);
 
 
-    if($year !== NULL && $month === NULL && $day === NULL) {
+    if($viewMode === "year") {
       if($year === $thisYear) {
         $lastMonth = (int)date("m");
       }
@@ -366,7 +403,7 @@ class App {
         }
       }
     }
-    else if($year !== NULL && $month !== NULL && $day === NULL) {
+    else if($viewMode === "yearmonth") {
       if($year === $thisYear && $month === $thisMonth) {
         $lastDay = (int)date("d");
       }
@@ -379,7 +416,7 @@ class App {
         }
       }
     }
-    else if($year !== NULL && $month !== NULL && $day !== NULL) {
+    else if($viewMode === "yearmonthday") {
       if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $article_dates, true)) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
@@ -511,6 +548,7 @@ class View {
     $year = (int)($viewData["year"] ?? 0);
     $month = (int)($viewData["month"] ?? 0);
     $day = (int)($viewData["day"] ?? 0);
+    $viewMode = $viewData["viewMode"];
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
 
@@ -532,7 +570,7 @@ class View {
     $thisYear = (int)date("Y");
     $thisMonth = (int)date("n");
     $thisDay = (int)date("j");
-    if($year !== 0 && $month !== 0 && $day !== 0) { // 年月日表示モードなら前日・今月・翌日ナビ表示
+    if($viewMode === "yearmonthday") {
       $date = sprintf("%04d-%02d-%02d", $year, $month, $day);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 day")));
       $prevMonth = (int)(date("n", strtotime("{$date} -1 day")));
@@ -550,7 +588,7 @@ class View {
         $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
       }
     }
-    if($year !== 0 && $month !== 0 && $day === 0) { // 年月表示モードなら前月・今年・翌月ナビ表示
+    if($viewMode === "default" || $viewMode === "yearmonth") {
       $date = sprintf("%04d-%02d-%02d", $year, $month, 1);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 month")));
       $prevMonth = (int)(date("n", strtotime("{$date} -1 month")));
@@ -566,7 +604,7 @@ class View {
         $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
       }
     }
-    if($year !== 0 && $month === 0 && $day === 0) { // 年表示モードなら前年・翌年ナビ表示
+    if($viewMode === "year") {
       $date = sprintf("%04d-%02d-%02d", $year, 1, 1);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 year")));
       if($prevYear <= $thisYear) {
@@ -591,14 +629,14 @@ class View {
         HTML;
     }
 
-    if($year !== 0 && $month !== 0 && $day === 0) {
+    if($viewMode === "yearmonth") {
       $contents .= <<<HTML
         <div class="yearmonth">
           <h2>{$year}年{$month}月</h2>
         </div>
         HTML;
     }
-    if($year !== 0 && $month === 0 && $day === 0) {
+    if($viewMode === "year") {
       $contents .= <<<HTML
         <div class="yearmonth">
           <h2>{$year}年</h2>
