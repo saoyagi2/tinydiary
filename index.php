@@ -539,7 +539,7 @@ class View {
         $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}&amp;month={$month}\">今月</a>";
+        $links[] = "<a href=\"index.php?year={$year}&amp;month={$month}\">当月</a>";
       }
       $nextYear = (int)(date("Y", strtotime("{$date} +1 day")));
       $nextMonth = (int)(date("n", strtotime("{$date} +1 day")));
@@ -556,7 +556,7 @@ class View {
         $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}\">今年</a>";
+        $links[] = "<a href=\"index.php?year={$year}\">当年</a>";
       }
       $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
