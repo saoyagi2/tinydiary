@@ -101,17 +101,18 @@ class App {
       header("Location: " . $this->getFullUrl());
       return;
     }
+
     $wheres = [];
     $params = [];
-    if(!empty($year)) {
+    if($year !== null) {
       $wheres[] = "year = :year";
       $params["year"] = $year;
     }
-    if(!empty($month)) {
+    if($month !== null) {
       $wheres[] = "month = :month";
       $params["month"] = $month;
     }
-    if(!empty($day)) {
+    if($day !== null) {
       $wheres[] = "day = :day";
       $params["day"] = $day;
     }
@@ -239,12 +240,12 @@ class App {
    */
   private function update() : void
   {
-    $formToken = $this->getParam("csrf_token", "POST");
     if(!$this->logined) {
       $this->setNotice("ログインしていません");
       header("Location: " . $this->getFullUrl());
       return;
     }
+    $formToken = $this->getParam("csrf_token", "POST");
     if(!$this->checkCsrfToken($formToken)) {
       $this->setNotice("不正な操作です");
       header("Location: " . $this->getFullUrl());
@@ -317,7 +318,7 @@ class App {
    * @param ?int $year 年
    * @param ?int $month 月
    * @param ?int $day 日
-   * @return ?string モード(default/year/month/day/yearmonth/yearday/yearmonthday/monthday)
+   * @return ?string 表示モード(default/year/month/day/yearmonth/yearday/yearmonthday/monthday)
    */
   private function getViewMode(?int $year, ?int $month, ?int $day) : ?string
   {
@@ -378,9 +379,8 @@ class App {
     }
 
     $article_dates = array_map(function($article) {
-      return(sprintf("%04d%02d%02d", (int)$article["year"], (int)$article["month"], (int)$article["day"]));
+      return(sprintf("%04d%02d%02d", $article["year"], $article["month"], $article["day"]));
     }, $articles);
-
 
     if($viewMode === "year") {
       if($year === $thisYear) {
@@ -545,9 +545,9 @@ class View {
    */
   public function displayShow(array $viewData) : void
   {
-    $year = (int)($viewData["year"] ?? 0);
-    $month = (int)($viewData["month"] ?? 0);
-    $day = (int)($viewData["day"] ?? 0);
+    $year = $viewData["year"];
+    $month = $viewData["month"];
+    $day = $viewData["day"];
     $viewMode = $viewData["viewMode"];
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
@@ -648,9 +648,9 @@ class View {
       return !empty($fragment);
     });
     foreach($viewData["articles"] as $article) {
-      $year = (int)$article["year"];
-      $month = (int)$article["month"];
-      $day = (int)$article["day"];
+      $year = $article["year"];
+      $month = $article["month"];
+      $day = $article["day"];
       $weekday = $this->weekday($year, $month, $day);
 
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
@@ -738,9 +738,9 @@ class View {
    */
   public function displayEdit(array $viewData) : void
   {
-    $year = (int)$viewData["article"]["year"];
-    $month = (int)$viewData["article"]["month"];
-    $day = (int)$viewData["article"]["day"];
+    $year = $viewData["article"]["year"];
+    $month = $viewData["article"]["month"];
+    $day = $viewData["article"]["day"];
     $weekday = $this->weekday($year, $month, $day);
     $message = $this->h($viewData["article"]["message"]);
     $csrfToken = $this->h($viewData["csrf_token"]);
