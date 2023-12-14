@@ -44,7 +44,7 @@ class App {
     }
 
     session_start();
-    $this->logined = $_SESSION["logined"] ?? FALSE;
+    $this->logined = $_SESSION["logined"] ?? false;
   }
 
   /**
@@ -69,7 +69,7 @@ class App {
     elseif($getAction === "search") {
       $this->search();
     }
-    elseif(is_null($getAction)) {
+    elseif($getAction === "view" || $getAction === null) {
       $this->show();
     }
     else {
@@ -83,19 +83,11 @@ class App {
    */
   private function show() : void
   {
-    $year = $this->getParam("year", "GET");
-    if(!is_null($year)) {
-      $year = (int)$year;
-    }
-    $month = $this->getParam("month", "GET");
-    if(!is_null($month)) {
-      $month = (int)$month;
-    }
-    $day = $this->getParam("day", "GET");
-    if(!is_null($day)) {
-      $day = (int)$day;
-    }
-    if(is_null($year) && is_null($month) && is_null($day)) {
+    $year = $this->getParam("year", "GET", "int");
+    $month = $this->getParam("month", "GET", "int");
+    $day = $this->getParam("day", "GET", "int");
+    $viewMode = $this->getViewMode($year, $month, $day);
+    if($viewMode === "default") {
       $year = (int)date("Y");
       $month = (int)date("m");
       $sort = "DESC";
@@ -109,17 +101,18 @@ class App {
       header("Location: " . $this->getFullUrl());
       return;
     }
+
     $wheres = [];
     $params = [];
-    if(!empty($year)) {
+    if($year !== null) {
       $wheres[] = "year = :year";
       $params["year"] = $year;
     }
-    if(!empty($month)) {
+    if($month !== null) {
       $wheres[] = "month = :month";
       $params["month"] = $month;
     }
-    if(!empty($day)) {
+    if($day !== null) {
       $wheres[] = "day = :day";
       $params["day"] = $day;
     }
@@ -138,6 +131,7 @@ class App {
       "year" => $year,
       "month" => $month,
       "day" => $day,
+      "viewMode" => $viewMode,
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -202,9 +196,9 @@ class App {
       return;
     }
 
-    $year = (int)($this->getParam("year", "GET") ?? date("Y"));
-    $month = (int)($this->getParam("month", "GET") ?? date("m"));
-    $day = (int)($this->getParam("day", "GET") ?? date("d"));
+    $year = $this->getParam("year", "GET", "int");
+    $month = $this->getParam("month", "GET", "int");
+    $day = $this->getParam("day", "GET", "int");
     if(!checkdate($month, $day, $year)) {
       $this->setNotice("日付が異常です");
       header("Location: " . $this->getFullUrl());
@@ -246,22 +240,22 @@ class App {
    */
   private function update() : void
   {
-    $formToken = $this->getParam("csrf_token", "POST");
     if(!$this->logined) {
       $this->setNotice("ログインしていません");
       header("Location: " . $this->getFullUrl());
       return;
     }
+    $formToken = $this->getParam("csrf_token", "POST");
     if(!$this->checkCsrfToken($formToken)) {
       $this->setNotice("不正な操作です");
       header("Location: " . $this->getFullUrl());
       return;
     }
 
-    $year = (int)($this->getParam("year", "POST") ?? 0);
-    $month = (int)($this->getParam("month", "POST") ?? 0);
-    $day = (int)($this->getParam("day", "POST") ?? 0);
-    $message = $this->getParam("message", "POST") ?? "";
+    $year = $this->getParam("year", "POST", "int");
+    $month = $this->getParam("month", "POST", "int");
+    $day = $this->getParam("day", "POST", "int");
+    $message = $this->getParam("message", "POST");
     if(!checkdate($month, $day, $year)) {
       $this->setNotice("日付が異常です");
       header("Location: " . $this->getFullUrl());
@@ -298,8 +292,8 @@ class App {
   {
     $formToken = $this->getParam("csrf_token", "POST");
     if($this->checkCsrfToken($formToken) && hash_equals($this->getParam("password", "POST"), $this->config["password"])) {
-      $_SESSION["logined"] = TRUE;
-      $this->getCsrfToken(TRUE);
+      $_SESSION["logined"] = true;
+      $this->getCsrfToken(true);
       $this->setNotice("ログインしました");
     }
     else {
@@ -313,9 +307,46 @@ class App {
    */
   private function logout() : void
   {
-    $_SESSION["logined"] = FALSE;
+    $_SESSION["logined"] = false;
     $this->setNotice("ログアウトしました");
     header("Location: " . $this->getFullUrl());
+  }
+
+  /**
+   * 表示モード
+   *
+   * @param ?int $year 年
+   * @param ?int $month 月
+   * @param ?int $day 日
+   * @return ?string 表示モード(default/year/month/day/yearmonth/yearday/yearmonthday/monthday)
+   */
+  private function getViewMode(?int $year, ?int $month, ?int $day) : ?string
+  {
+    if($year === null && $month === null && $day === null) {
+      return("default");
+    }
+    if($year !== null && $month === null && $day === null) {
+      return("year");
+    }
+    if($year === null && $month !== null && $day === null) {
+      return("month");
+    }
+    if($year === null && $month === null && $day !== null) {
+      return("day");
+    }
+    if($year !== null && $month !== null && $day === null) {
+      return("yearmonth");
+    }
+    if($year !== null && $month === null && $day !== null) {
+      return("yearday");
+    }
+    if($year !== null && $month !== null && $day !== null) {
+      return("yearmonthday");
+    }
+    if($year === null && $month !== null && $day !== null) {
+      return("monthday");
+    }
+    return(null);
   }
 
   /**
@@ -331,10 +362,8 @@ class App {
   private function interpolateArticles(array $articles, ?int $year, ?int $month, ?int $day, string $sort) : array
   {
     // 年/年月/年月日以外なら補完なし
-    if(!(
-      (!is_null($year) && is_null($month) && is_null($day)) ||
-      (!is_null($year) && !is_null($month) && is_null($day)) ||
-      (!is_null($year) && !is_null($month) && !is_null($day)))) {
+    $viewMode = $this->getViewMode($year, $month, $day);
+    if(!in_array($viewMode, ["year", "yearmonth", "yearmonthday"], true)) {
       return($articles);
     }
 
@@ -344,17 +373,16 @@ class App {
 
     // 未来の日記は表示しない
     if(($year > $thisYear) ||
-      (!is_null($month) && $year === $thisYear && $month > $thisMonth) ||
-      (!is_null($month) && !is_null($day) && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
+      (in_array($viewMode, ["yearmonth", "yearmonthday"], true) && $year === $thisYear && $month > $thisMonth) ||
+      ($viewMode === "yearmonthday" && $year === $thisYear && $month === $thisMonth && $day > $thisDay)) {
       return([]);
     }
 
     $article_dates = array_map(function($article) {
-      return(sprintf("%04d%02d%02d", (int)$article["year"], (int)$article["month"], (int)$article["day"]));
+      return(sprintf("%04d%02d%02d", $article["year"], $article["month"], $article["day"]));
     }, $articles);
 
-
-    if(!is_null($year) && is_null($month) && is_null($day)) {
+    if($viewMode === "year") {
       if($year === $thisYear) {
         $lastMonth = (int)date("m");
       }
@@ -375,7 +403,7 @@ class App {
         }
       }
     }
-    else if(!is_null($year) && !is_null($month) && is_null($day)) {
+    else if($viewMode === "yearmonth") {
       if($year === $thisYear && $month === $thisMonth) {
         $lastDay = (int)date("d");
       }
@@ -388,7 +416,7 @@ class App {
         }
       }
     }
-    else if(!is_null($year) && !is_null($month) && !is_null($day)) {
+    else if($viewMode === "yearmonthday") {
       if(!in_array(sprintf("%04d%02d%02d", $year, $month, $day), $article_dates, true)) {
         $articles[] = ["year" => $year, "month" => $month, "day" => $day, "message" => ""];
       }
@@ -411,19 +439,30 @@ class App {
    *
    * @param string $key パラメータ名
    * @param string $method メソッド(GET, POST)
+   * @param ?string $type 型
    * @return ?string パラメータ値
    */
-  private function getParam(string $key, string $method) : ?string
+  private function getParam(string $key, string $method, ?string $type = null) : mixed
   {
     switch($method) {
       case "GET":
-        $param = $_GET[$key] ?? NULL;
+        $param = $_GET[$key] ?? null;
         break;
       case "POST":
-        $param = $_POST[$key] ?? NULL;
+        $param = $_POST[$key] ?? null;
         break;
       default:
-        $param = NULL;
+        $param = null;
+    }
+    if($param !== null && $type !== null) {
+      switch($type) {
+        case "int":
+          $param = (int)$param;
+          break;
+        case "bool":
+          $param = (bool)$param;
+          break;
+      }
     }
     return($param);
   }
@@ -434,7 +473,7 @@ class App {
    * @param ?array $queries クエリ
    * @return string フルURL
    */
-  private function getFullUrl(?array $queries = NULL) : string
+  private function getFullUrl(?array $queries = null) : string
   {
     $fullUrl = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
     if(!empty($queries)) {
@@ -453,7 +492,7 @@ class App {
    */
   private function getNotice() : ?string
   {
-    $notice = $_SESSION["notice"] ?? NULL;
+    $notice = $_SESSION["notice"] ?? null;
     unset($_SESSION["notice"]);
     return($notice);
   }
@@ -471,10 +510,10 @@ class App {
   /**
    * CSRF対策トークン生成
    *
-   * @param bool $reset TRUEならトークン生成、FALSEなら再利用
+   * @param bool $reset trueならトークン生成、falseなら再利用
    * @return string CSRF対策トークン
    */
-  private function getCsrfToken(bool $reset = FALSE) : string
+  private function getCsrfToken(bool $reset = false) : string
   {
     if(!isset($_SESSION["csrf_token"]) || $reset) {
       $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
@@ -506,9 +545,10 @@ class View {
    */
   public function displayShow(array $viewData) : void
   {
-    $year = (int)($viewData["year"] ?? 0);
-    $month = (int)($viewData["month"] ?? 0);
-    $day = (int)($viewData["day"] ?? 0);
+    $year = $viewData["year"];
+    $month = $viewData["month"];
+    $day = $viewData["day"];
+    $viewMode = $viewData["viewMode"];
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
 
@@ -530,49 +570,49 @@ class View {
     $thisYear = (int)date("Y");
     $thisMonth = (int)date("n");
     $thisDay = (int)date("j");
-    if($year !== 0 && $month !== 0 && $day !== 0) { // 年月日表示モードなら前日・今月・翌日ナビ表示
+    if($viewMode === "yearmonthday") {
       $date = sprintf("%04d-%02d-%02d", $year, $month, $day);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 day")));
       $prevMonth = (int)(date("n", strtotime("{$date} -1 day")));
       $prevDay = (int)(date("j", strtotime("{$date} -1 day")));
       if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth < $thisMonth) || ($prevYear === $thisYear && $prevMonth === $thisMonth && $prevDay <= $thisDay)) {
-        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}&amp;month={$prevMonth}&amp;day={$prevDay}\">前日</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}&amp;month={$month}\">当月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$year}&amp;month={$month}\">当月</a>";
       }
       $nextYear = (int)(date("Y", strtotime("{$date} +1 day")));
       $nextMonth = (int)(date("n", strtotime("{$date} +1 day")));
       $nextDay = (int)(date("j", strtotime("{$date} +1 day")));
       if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth < $thisMonth) || ($nextYear === $thisYear && $nextMonth === $thisMonth && $nextDay <= $thisDay)) {
-        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}&amp;day={$nextDay}\">翌日</a>";
       }
     }
-    if($year !== 0 && $month !== 0 && $day === 0) { // 年月表示モードなら前月・今年・翌月ナビ表示
+    if($viewMode === "default" || $viewMode === "yearmonth") {
       $date = sprintf("%04d-%02d-%02d", $year, $month, 1);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 month")));
       $prevMonth = (int)(date("n", strtotime("{$date} -1 month")));
       if($prevYear < $thisYear || ($prevYear === $thisYear && $prevMonth <= $thisMonth)) {
-        $links[] = "<a href=\"index.php?year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}&amp;month={$prevMonth}\">前月</a>";
       }
       if($year <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$year}\">当年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$year}\">当年</a>";
       }
       $nextYear = (int)(date("Y", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       $nextMonth = (int)(date("n", strtotime(sprintf("%04d-%02d-%02d", $year, $month, 1) . "+1 month")));
       if($nextYear < $thisYear || ($nextYear === $thisYear && $nextMonth <= $thisMonth)) {
-        $links[] = "<a href=\"index.php?year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}&amp;month={$nextMonth}\">翌月</a>";
       }
     }
-    if($year !== 0 && $month === 0 && $day === 0) { // 年表示モードなら前年・翌年ナビ表示
+    if($viewMode === "year") {
       $date = sprintf("%04d-%02d-%02d", $year, 1, 1);
       $prevYear = (int)(date("Y", strtotime("{$date} -1 year")));
       if($prevYear <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$prevYear}\">前年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$prevYear}\">前年</a>";
       }
       $nextYear = (int)(date("Y", strtotime("{$date} +1 year")));
       if($nextYear <= $thisYear) {
-        $links[] = "<a href=\"index.php?year={$nextYear}\">翌年</a>";
+        $links[] = "<a href=\"index.php?action=view&amp;year={$nextYear}\">翌年</a>";
       }
     }
     if(!empty($links)) {
@@ -589,14 +629,14 @@ class View {
         HTML;
     }
 
-    if($year !== 0 && $month !== 0 && $day === 0) {
+    if($viewMode === "yearmonth") {
       $contents .= <<<HTML
         <div class="yearmonth">
           <h2>{$year}年{$month}月</h2>
         </div>
         HTML;
     }
-    if($year !== 0 && $month === 0 && $day === 0) {
+    if($viewMode === "year") {
       $contents .= <<<HTML
         <div class="yearmonth">
           <h2>{$year}年</h2>
@@ -608,9 +648,9 @@ class View {
       return !empty($fragment);
     });
     foreach($viewData["articles"] as $article) {
-      $year = (int)$article["year"];
-      $month = (int)$article["month"];
-      $day = (int)$article["day"];
+      $year = $article["year"];
+      $month = $article["month"];
+      $day = $article["day"];
       $weekday = $this->weekday($year, $month, $day);
 
       $date = sprintf("%04d%02d%02d", $year, $month, $day);
@@ -618,12 +658,12 @@ class View {
         <div class="article" id="d{$date}">
           <div class="date">
             <h3>
-              <a href="index.php?year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
+              <a href="index.php?action=view&amp;year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
             </h3>
           </div>
           <div class="links">
             <ul>
-              <li><a href="index.php?month={$month}&amp;day={$day}">長年日記</a></li>
+              <li><a href="index.php?action=view&amp;month={$month}&amp;day={$day}">長年日記</a></li>
         HTML;
       if($logined) {
         $contents .= <<<HTML
@@ -698,9 +738,9 @@ class View {
    */
   public function displayEdit(array $viewData) : void
   {
-    $year = (int)$viewData["article"]["year"];
-    $month = (int)$viewData["article"]["month"];
-    $day = (int)$viewData["article"]["day"];
+    $year = $viewData["article"]["year"];
+    $month = $viewData["article"]["month"];
+    $day = $viewData["article"]["day"];
     $weekday = $this->weekday($year, $month, $day);
     $message = $this->h($viewData["article"]["message"]);
     $csrfToken = $this->h($viewData["csrf_token"]);
@@ -837,7 +877,7 @@ class View {
  */
 class Database {
   /** @var PDO */
-  private $conn = NULL;
+  private $conn = null;
 
   /**
    * コンストラクタ
@@ -858,7 +898,7 @@ class Database {
    */
   private function connectDatabase(string $dbPath) : void
   {
-    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, NULL, NULL, [
+    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, null, null, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
