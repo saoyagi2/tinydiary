@@ -177,6 +177,7 @@ class App {
       "description" => $this->config["description"],
       "articles" => $articles,
       "keyword" => $keyword,
+      "viewMode" => "search",
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -545,9 +546,9 @@ class View {
    */
   public function displayShow(array $viewData) : void
   {
-    $year = $viewData["year"];
-    $month = $viewData["month"];
-    $day = $viewData["day"];
+    $year = $viewData["year"] ?? null;
+    $month = $viewData["month"] ?? null;
+    $day = $viewData["day"] ?? null;
     $viewMode = $viewData["viewMode"];
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
