@@ -177,6 +177,7 @@ class App {
       "description" => $this->config["description"],
       "articles" => $articles,
       "keyword" => $keyword,
+      "viewMode" => "search",
       "logined" => $this->logined,
       "csrf_token" => $this->getCsrfToken(),
       "notice" => $this->getNotice(),
@@ -545,9 +546,9 @@ class View {
    */
   public function displayShow(array $viewData) : void
   {
-    $year = $viewData["year"];
-    $month = $viewData["month"];
-    $day = $viewData["day"];
+    $year = $viewData["year"] ?? null;
+    $month = $viewData["month"] ?? null;
+    $day = $viewData["day"] ?? null;
     $viewMode = $viewData["viewMode"];
     $keyword = $viewData["keyword"] ?? "";
     $logined = $viewData["logined"] ?? false;
@@ -648,26 +649,26 @@ class View {
       return !empty($fragment);
     });
     foreach($viewData["articles"] as $article) {
-      $year = $article["year"];
-      $month = $article["month"];
-      $day = $article["day"];
-      $weekday = $this->weekday($year, $month, $day);
+      $_year = $article["year"];
+      $_month = $article["month"];
+      $_day = $article["day"];
+      $_weekday = $this->weekday($_year, $_month, $_day);
 
-      $date = sprintf("%04d%02d%02d", $year, $month, $day);
+      $_date = sprintf("%04d%02d%02d", $_year, $_month, $_day);
       $contents .= <<<HTML
-        <div class="article" id="d{$date}">
+        <div class="article" id="d{$_date}">
           <div class="date">
             <h3>
-              <a href="index.php?action=view&amp;year={$year}&amp;month={$month}&amp;day={$day}">{$year}年{$month}月{$day}日({$weekday})</a>
+              <a href="index.php?action=view&amp;year={$_year}&amp;month={$_month}&amp;day={$_day}">{$_year}年{$_month}月{$_day}日({$_weekday})</a>
             </h3>
           </div>
           <div class="links">
             <ul>
-              <li><a href="index.php?action=view&amp;month={$month}&amp;day={$day}">長年日記</a></li>
+              <li><a href="index.php?action=view&amp;month={$_month}&amp;day={$_day}">長年日記</a></li>
         HTML;
       if($logined) {
         $contents .= <<<HTML
-          <li><a href="index.php?action=edit&amp;year={$year}&amp;month={$month}&amp;day={$day}">編集</a></li>
+          <li><a href="index.php?action=edit&amp;year={$_year}&amp;month={$_month}&amp;day={$_day}">編集</a></li>
         HTML;
       }
       $contents .= <<<HTML
