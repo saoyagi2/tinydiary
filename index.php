@@ -679,7 +679,7 @@ class View {
       foreach(preg_split("/\R/u", $article["message"]) as $fragment) {
         $_contents = $this->h($fragment);
         foreach($keywords as $keyword) {
-          $_contents = str_replace($keyword, "<em>$keyword</em>", $_contents);
+          $_contents = preg_replace("/($keyword)/i", "<em>$1</em>", $_contents);
         }
         $contents .= "<p>$_contents</p>";
       }
