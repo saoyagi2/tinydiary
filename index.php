@@ -157,7 +157,7 @@ class App {
       $params[] = "%" . preg_replace("/(?=[!_%])/", "!", $fragment) . "%";
     }
     if(!empty($wheres)) {
-      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT 21";
+      $sql = "SELECT * FROM articles WHERE " . implode(" AND ", $wheres) . " ESCAPE '!' ORDER BY year DESC, month DESC, day DESC LIMIT " . App::SEARCH_LIMIT + 1;
       $articles = $this->database->query($sql, $params);
       if(count($articles) > App::SEARCH_LIMIT) {
         $this->setNotice("制限以上ヒットしたため検索結果を一部省略しました");
