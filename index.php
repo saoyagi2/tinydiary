@@ -16,13 +16,13 @@ require "config.php";
  * アプリケーションクラス
  */
 class App {
-  /** @var array config 設定情報 */
+  /** @var array 設定情報 */
   private $config;
-  /** @var Database $db データベースオブジェクト */
+  /** @var Database データベースオブジェクト */
   private $database;
-  /** @var View $view 表示オブジェクト */
+  /** @var View 表示オブジェクト */
   private $view;
-  /** @var View $logined ログイン状態フラグ */
+  /** @var bool ログイン状態フラグ */
   private $logined;
 
   /** @var int 検索件数上限 */ 
@@ -358,7 +358,7 @@ class App {
    * @param ?int $month 月
    * @param ?int $day 日
    * @param string $sort ソート順。"ASC"なら昇順、"DESC"なら降順
-   * @return arrray $articles 補完済日記データ
+   * @return arrray 補完済日記データ
    */
   private function interpolateArticles(array $articles, ?int $year, ?int $month, ?int $day, string $sort) : array
   {
@@ -501,7 +501,7 @@ class App {
   /**
    * お知らせセット
    *
-   * @param string notice お知らせ
+   * @param string $notice お知らせ
    */
   private function setNotice(string $notice) : void
   {
@@ -525,7 +525,7 @@ class App {
   /**
    * CSRF対策トークン照合
    *
-   * @param string formToken FORMから渡されたCSRF対策トークン
+   * @param string $formToken FORMから渡されたCSRF対策トークン
    * @retrun bool 照合結果(trueなら正常、falseなら不正)
    */
   private function checkCsrfToken(string $formToken) : bool
@@ -877,7 +877,7 @@ class View {
  * データベース操作クラス
  */
 class Database {
-  /** @var PDO */
+  /** @var PDO PDOオブジェクト*/
   private $conn = null;
 
   /**
