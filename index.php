@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 require "config.php";
 
 {
@@ -17,13 +19,13 @@ require "config.php";
  */
 class App {
   /** @var array 設定情報 */
-  private $config;
+  private array $config;
   /** @var Database データベースオブジェクト */
-  private $database;
+  private Database $database;
   /** @var View 表示オブジェクト */
-  private $view;
+  private View $view;
   /** @var bool ログイン状態フラグ */
-  private $logined;
+  private bool $logined;
 
   /** @var int 検索件数上限 */ 
   const SEARCH_LIMIT = 20;
@@ -479,7 +481,7 @@ class App {
     $fullUrl = ((empty($_SERVER["HTTPS"]) || $_SERVER["HTTPS"] === "off") ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["SCRIPT_NAME"];
     if(!empty($queries)) {
       $fullUrl .= "?" . implode("&", array_map(function($key, $value) {
-        return(urlencode($key) . "=" . urlencode($value));
+        return(urlencode((string)$key) . "=" . urlencode((string)$value));
       }, array_keys($queries), array_values($queries)));
     }
 
@@ -878,7 +880,7 @@ class View {
  */
 class Database {
   /** @var PDO PDOオブジェクト*/
-  private $conn = null;
+  private ?PDO $conn = null;
 
   /**
    * コンストラクタ
