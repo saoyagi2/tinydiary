@@ -45,7 +45,9 @@ class App {
       date_default_timezone_set($config["timezone"]);
     }
 
-    session_start();
+    if(session_start() === false) {
+      throw new Exception('セッションが開始できません');
+    }
     $this->logined = $_SESSION["logined"] ?? false;
   }
 
