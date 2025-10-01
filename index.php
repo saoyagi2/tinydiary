@@ -626,7 +626,7 @@ class View {
           <ul>
         HTML;
       foreach($links as $link) {
-        $contents .= "<li>${link}</li>";
+        $contents .= "<li>{$link}</li>";
       }
       $contents .= <<<HTML
           </ul>
@@ -756,9 +756,9 @@ class View {
         <form action="index.php" method="POST">
           <input type="hidden" name="action" value="update">
           <input type="hidden" name="csrf_token" value="{$csrfToken}">
-          <input type="hidden" name="year" value="${year}">
-          <input type="hidden" name="month" value="${month}">
-          <input type="hidden" name="day" value="${day}">
+          <input type="hidden" name="year" value="{$year}">
+          <input type="hidden" name="month" value="{$month}">
+          <input type="hidden" name="day" value="{$day}">
           <textarea id="message" name="message">{$message}</textarea>
           <button type="submit">更新</button>
         </form>
