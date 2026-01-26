@@ -726,7 +726,7 @@ class View {
       </script>
     HTML;
 
-    if($viewMode !== "default" && empty($viewData["articles"])) {
+    if($viewMode !== "default" && empty($viewData["articles"])) { // ログイン時は interpolateArticles() にて $viewData["articles"] の補完生成が行われるため empty($viewData["articles"] のみで判定
       $status = 404;
     }
     else {
