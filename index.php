@@ -913,7 +913,8 @@ class Database {
    */
   private function connectDatabase(string $dbPath) : void
   {
-    $this->conn = new PDO("sqlite:" . __DIR__ . "/" . $dbPath, null, null, [
+    $_dbPath = substr($dbPath, 0, 1) === "/" ? $dbPath : __DIR__ . "/{$dbPath}";
+    $this->conn = new PDO("sqlite:{$_dbPath}", null, null, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
