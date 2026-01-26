@@ -726,6 +726,13 @@ class View {
       </script>
     HTML;
 
+    if($viewMode !== "default" && empty($viewData["articles"])) {
+      $status = 404;
+    }
+    else {
+      $status = 200;
+    }
+
     $this->output([
       "title" => $viewData["title"],
       "description" => $viewData["description"],
@@ -733,6 +740,7 @@ class View {
       "contents" => $contents,
       "css" => $viewData["css"],
       "favicon" => $viewData["favicon"],
+      "status" => $status,
     ]);
   }
 
@@ -776,6 +784,7 @@ class View {
       "contents" => $contents,
       "css" => $viewData["css"],
       "favicon" => $viewData["favicon"],
+      "status" => 200,
     ]);
   }
 
@@ -822,6 +831,7 @@ class View {
       $noticeHtml = "";
     }
 
+    http_response_code($outputData["status"]);
     print <<<HTML
       <!DOCTYPE html>
       <html lang="ja">
