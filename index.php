@@ -46,7 +46,7 @@ class App {
     }
 
     if(session_start() === false) {
-      throw new Exception('セッションが開始できません');
+      throw new Exception("セッションが開始できません");
     }
     $this->logined = $_SESSION["logined"] ?? false;
   }
