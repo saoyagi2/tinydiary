@@ -48,6 +48,11 @@ class App {
     if(session_start() === false) {
       throw new Exception("セッションが開始できません");
     }
+    $timestamp = time();
+    if(isset($_SESSION['last_activity']) && $timestamp - $_SESSION['last_activity'] > ini_get('session.gc_maxlifetime')) {
+      $_SESSION = [];
+    }
+    $_SESSION['last_activity'] = $timestamp;
     $this->logined = $_SESSION["logined"] ?? false;
   }
 
@@ -534,7 +539,7 @@ class App {
    */
   private function checkCsrfToken(string $formToken) : bool
   {
-    $csrfToken = $_SESSION["csrf_token"];
+    $csrfToken = $_SESSION["csrf_token"] ?? "";
     return(hash_equals($csrfToken, $formToken));
   }
 }
